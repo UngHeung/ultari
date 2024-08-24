@@ -23,7 +23,7 @@ export class UserEntity extends BaseEntity {
   @Column()
   userEmail: string;
   @Column()
-  userProfile: string; // string -> Profile
-  @Column()
   userRole: string;
+
+  // userProfile : Profile - OneToOne
 }
