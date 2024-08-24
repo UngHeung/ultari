@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from './entity/user-entity';
+import { UserEntity } from './entity/user.entity';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { UserSignupDto } from './dto/user-signup.dto';
@@ -19,14 +19,17 @@ export class AuthService {
   ) {}
 
   async createUser(userSignupDto: UserSignupDto): Promise<void> {
+    const userPassword = await this.encodePassword(userSignupDto.userPassword);
     const user = this.userRepository.create({
       ...userSignupDto,
-      userPassword: await this.encodePassword(userSignupDto.userPassword),
+      userPassword,
+      userRole: 'ROLE_USER',
     });
 
     try {
       await this.userRepository.save(user);
     } catch (error) {
+      console.log(error);
       if (error.code === '23505')
         throw new ConflictException('이미 등록된 계정입니다.');
       else throw new InternalServerErrorException();
