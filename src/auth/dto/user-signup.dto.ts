@@ -6,7 +6,7 @@ export class UserSignupDto {
   userAccount: string;
   @IsString()
   @IsNotEmpty()
-  password: string;
+  userPassword: string;
   @IsString()
   @IsNotEmpty()
   userName: string;
