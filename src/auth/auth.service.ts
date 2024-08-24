@@ -19,8 +19,10 @@ export class AuthService {
   ) {}
 
   async createUser(userSignupDto: UserSignupDto): Promise<void> {
-    // userSignupDto.userPassword = 'bcypt'
-    const user = this.userRepository.create(userSignupDto);
+    const user = this.userRepository.create({
+      ...userSignupDto,
+      userPassword: await this.encodePassword(userSignupDto.userPassword),
+    });
 
     try {
       await this.userRepository.save(user);
