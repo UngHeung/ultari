@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entity/user.entity';
 import { Repository } from 'typeorm';
@@ -30,10 +26,15 @@ export class AuthService {
       await this.userRepository.save(user);
     } catch (error) {
       console.log(error);
-      if (error.code === '23505')
-        throw new ConflictException('이미 등록된 계정입니다.');
+      if (error.code === '23505') throw new ConflictException('이미 등록된 계정입니다.');
       else throw new InternalServerErrorException();
     }
+  }
+
+  async getUser(id: number): Promise<UserEntity> {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) throw new NotFoundException(`계정이 존재하지 않습니다. ID : ${id}`);
+    return user;
   }
 
   async encodePassword(userPassword: string) {
