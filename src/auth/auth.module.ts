@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entity/user.entity';
 import { JwtStrategy } from './jwt.strategy';
 import * as config from 'config';
+import { UserProfileEntity } from './entity/user-profile.entity';
 
 const jwtConfig: { secret: string; expiresIn: number } = config.get('jwt');
 @Module({
@@ -18,7 +19,7 @@ const jwtConfig: { secret: string; expiresIn: number } = config.get('jwt');
         expiresIn: jwtConfig.expiresIn,
       },
     }),
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, UserProfileEntity]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
