@@ -31,7 +31,12 @@ export class AuthService {
     }
   }
 
-  async getUser(id: number): Promise<UserEntity> {
+  async getUsers(): Promise<UserEntity[]> {
+    const user = await this.userRepository.find();
+    return user;
+  }
+
+  async getUserById(id: number): Promise<UserEntity> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) throw new NotFoundException(`계정이 존재하지 않습니다. ID : ${id}`);
     return user;
