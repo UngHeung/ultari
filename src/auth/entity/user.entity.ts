@@ -1,10 +1,5 @@
-import {
-  BaseEntity,
-  Column,
-  Entity,
-  PrimaryGeneratedColumn,
-  Unique,
-} from 'typeorm';
+import { BaseEntity, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { UserProfileEntity } from './user-profile.entity';
 
 @Entity()
 @Unique(['userAccount'])
@@ -23,7 +18,10 @@ export class UserEntity extends BaseEntity {
   @Column()
   userEmail: string;
   @Column()
-  userProfile: string; // string -> Profile
-  @Column()
   userRole: string;
+
+  // userProfile : Profile - OneToOne
+  @OneToOne(() => UserProfileEntity)
+  @JoinColumn()
+  userProfile?: UserProfileEntity;
 }
