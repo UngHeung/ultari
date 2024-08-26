@@ -23,5 +23,5 @@ export class UserEntity extends BaseEntity {
   // userProfile : Profile - OneToOne
   @OneToOne(() => UserProfileEntity)
   @JoinColumn()
-  userPrfile?: UserProfileEntity;
+  userProfile?: UserProfileEntity;
 }

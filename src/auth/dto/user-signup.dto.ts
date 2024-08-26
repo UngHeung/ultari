@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString } from 'class-validator';
+import { UserProfileEntity } from '../entity/user-profile.entity';
 
 export class SignupUserDto {
   @IsString()
@@ -17,5 +18,5 @@ export class SignupUserDto {
   @IsNotEmpty()
   userEmail: string;
 
-  userProfile?: string; // string -> Profile
+  userProfile?: UserProfileEntity; // string -> Profile
 }
