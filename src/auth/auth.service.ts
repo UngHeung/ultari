@@ -32,7 +32,6 @@ export class AuthService {
     const user = this.userRepository.create({
       ...signupUserDto,
       userPassword,
-      userRole: 'ROLE_USER',
     });
 
     try {
