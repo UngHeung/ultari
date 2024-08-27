@@ -51,7 +51,9 @@ export class UserEntity extends BaseEntity {
   userRole: string;
 
   // userProfile : Profile - OneToOne
-  @OneToOne(() => UserProfileEntity)
+  @OneToOne(() => UserProfileEntity, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   userProfile?: UserProfileEntity;
 }
