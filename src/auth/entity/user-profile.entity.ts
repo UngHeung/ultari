@@ -5,6 +5,8 @@ export class UserProfileEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({
+    type: 'varchar',
+  })
   imagePath: string;
 }
