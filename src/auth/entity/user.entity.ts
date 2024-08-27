@@ -3,6 +3,8 @@ import { UserProfileEntity } from './user-profile.entity';
 
 export enum RoleEnum {
   USER = 'ROLE_USER',
+  SHEEP = 'ROLE_SHEEP',
+  SHEPERD = 'ROLE_SHEPHERD',
   ADMIN = 'ROLE_ADMIN',
 }
 
