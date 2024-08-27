@@ -1,23 +1,53 @@
 import { BaseEntity, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { UserProfileEntity } from './user-profile.entity';
 
+export enum RoleEnum {
+  USER = 'ROLE_USER',
+  ADMIN = 'ROLE_ADMIN',
+}
+
 @Entity()
-@Unique(['userAccount'])
 export class UserEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({
+    type: 'varchar',
+    unique: true,
+    length: 15,
+  })
   userAccount: string;
-  @Column()
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+  })
   userPassword: string;
-  @Column()
+
+  @Column({
+    type: 'varchar',
+    length: 10,
+  })
   userName: string;
-  @Column()
+
+  @Column({
+    type: 'varchar',
+    unique: true,
+    length: 13,
+  })
   userPhone: string;
-  @Column()
+
+  @Column({
+    type: 'varchar',
+    unique: true,
+    length: 30,
+  })
   userEmail: string;
-  @Column()
+
+  @Column({
+    enum: Object.values(RoleEnum),
+    default: RoleEnum.USER,
+  })
   userRole: string;
 
   // userProfile : Profile - OneToOne
