@@ -8,6 +8,7 @@ import { UserEntity } from '../user/entity/user.entity';
 import { JwtStrategy } from './jwt.strategy';
 import * as config from 'config';
 import { UserProfileEntity } from '../user/entity/user-profile.entity';
+import { UserService } from 'src/user/user.service';
 
 const jwtConfig: { secret: string; expiresIn: number } = config.get('jwt');
 @Module({
@@ -22,7 +23,7 @@ const jwtConfig: { secret: string; expiresIn: number } = config.get('jwt');
     TypeOrmModule.forFeature([UserEntity, UserProfileEntity]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, UserService],
   exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}
