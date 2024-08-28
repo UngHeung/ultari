@@ -1,5 +1,6 @@
-import { BaseEntity, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { UserProfileEntity } from './user-profile.entity';
+import { BaseModel } from 'src/common/entity/base.entity';
 
 export enum RoleEnum {
   USER = 'ROLE_USER',
@@ -9,7 +10,7 @@ export enum RoleEnum {
 }
 
 @Entity()
-export class UserEntity extends BaseEntity {
+export class UserEntity extends BaseModel {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -56,5 +57,5 @@ export class UserEntity extends BaseEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn()
-  userProfile?: UserProfileEntity;
+  userProfile?: UserProfileEntity | null;
 }
