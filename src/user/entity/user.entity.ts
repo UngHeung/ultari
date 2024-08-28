@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { UserProfileEntity } from './user-profile.entity';
 import { BaseModel } from 'src/common/entity/base.entity';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export enum RoleEnum {
   USER = 'ROLE_USER',
@@ -15,35 +16,39 @@ export class UserEntity extends BaseModel {
   id: number;
 
   @Column({
-    type: 'varchar',
     unique: true,
     length: 15,
   })
+  @IsString({ message: '아이디는 string 값을 입력해야 합니다.' })
+  @IsNotEmpty({ message: '아이디를 입력해주세요.' })
   userAccount: string;
 
-  @Column({
-    type: 'varchar',
-  })
+  @Column()
+  @IsString({ message: '비밀번호는 string 값을 입력해야 합니다.' })
+  @IsNotEmpty({ message: '비밀번호를 입력해주세요.' })
   userPassword: string;
 
   @Column({
-    type: 'varchar',
     length: 10,
   })
+  @IsString({ message: '이름은 string 값을 입력해야 합니다.' })
+  @IsNotEmpty({ message: '이름을 입력해주세요.' })
   userName: string;
 
   @Column({
-    type: 'varchar',
     unique: true,
     length: 13,
   })
+  @IsString({ message: '연락처는 string 값을 입력해야 합니다.' })
+  @IsNotEmpty({ message: '연락처를 입력해주세요.' })
   userPhone: string;
 
   @Column({
-    type: 'varchar',
     unique: true,
     length: 30,
   })
+  @IsString({ message: '이메일은 string 값을 입력해야 합니다.' })
+  @IsNotEmpty({ message: '이메일을 입력해주세요.' })
   userEmail: string;
 
   @Column({
