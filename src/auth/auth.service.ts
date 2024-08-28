@@ -11,8 +11,8 @@ import * as bcrypt from 'bcryptjs';
 export class AuthService {
   constructor(
     @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
-    private jwtService: JwtService,
+    private readonly userRepository: Repository<UserEntity>,
+    private readonly jwtService: JwtService,
   ) {}
 
   async createUser(authSignUpDto: AuthSignUpDto): Promise<void> {
