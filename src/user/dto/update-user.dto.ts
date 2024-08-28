@@ -1,16 +1,21 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { UserProfileEntity } from '../entity/user-profile.entity';
+import { PartialType } from '@nestjs/mapped-types';
+import { UserEntity } from '../entity/user.entity';
 
-export class UpdateUserDto {
+export class UpdateUserDto extends PartialType(UserEntity) {
   @IsString()
   @IsNotEmpty()
   userPassword: string;
 
   @IsString()
-  userPhone: string;
+  @IsOptional()
+  userPhone?: string;
 
   @IsString()
-  userEmail: string;
+  @IsOptional()
+  userEmail?: string;
 
-  userProfile: UserProfileEntity;
+  @IsOptional()
+  userProfile?: UserProfileEntity;
 }
