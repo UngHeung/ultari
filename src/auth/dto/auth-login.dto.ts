@@ -1,11 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { PickType } from '@nestjs/mapped-types';
+import { UserEntity } from 'src/user/entity/user.entity';
 
-export class AuthLoginDto {
-  @IsString()
-  @IsNotEmpty()
-  userAccount: string;
-
-  @IsString()
-  @IsNotEmpty()
-  userPassword: string;
-}
+export class AuthLoginDto extends PickType(UserEntity, ['userAccount', 'userPassword']) {}
