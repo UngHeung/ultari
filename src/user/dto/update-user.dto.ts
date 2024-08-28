@@ -8,6 +8,7 @@ export class UpdateUserDto {
 
   @IsString()
   userPhone: string;
+
   @IsString()
   userEmail: string;
 
