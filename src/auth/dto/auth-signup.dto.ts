@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString } from 'class-validator';
-import { UserProfileEntity } from '../entity/user-profile.entity';
+import { UserProfileEntity } from '../../user/entity/user-profile.entity';
 
-export class SignupUserDto {
+export class AuthSignUpDto {
   @IsString()
   @IsNotEmpty()
   userAccount: string;
