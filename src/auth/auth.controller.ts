@@ -9,7 +9,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('/signup')
-  registerUser(@Body() authSignupDto: AuthSignUpDto): Promise<Pick<UserEntity, 'id' | 'userName' | 'userRole'>> {
+  registerUser(@Body() authSignupDto: AuthSignUpDto): Promise<UserEntity> {
     return this.authService.registerUser(authSignupDto);
   }
 

@@ -13,7 +13,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async registerUser(authSignUpDto: AuthSignUpDto): Promise<Pick<UserEntity, 'id' | 'userName' | 'userRole'>> {
+  async registerUser(authSignUpDto: AuthSignUpDto): Promise<UserEntity> {
     const userPassword = await this.encodePassword(authSignUpDto.userPassword);
     return await this.userService.createUser({
       ...authSignUpDto,
@@ -21,18 +21,26 @@ export class AuthService {
     });
   }
 
-  async loginUser(authLoginDto: AuthLoginDto): Promise<{ accessToken: string }> {
+  async loginUser(authLoginDto: AuthLoginDto): Promise<{ accessToken: string; refreshToken: string }> {
     const { userAccount, userPassword } = authLoginDto;
     const user = await this.userService.getUserByUserAccount(userAccount);
 
-    if (!user || !(await bcrypt.compare(userPassword, user.userPassword))) throw new UnauthorizedException('아이디 또는 비밀번호를 확인해주세요.');
+    if (!user || !(await bcrypt.compare(userPassword, user.userPassword)))
+      throw new UnauthorizedException('아이디 또는 비밀번호를 확인해주세요.');
 
-    return { accessToken: this.signToken(user) };
+    return { accessToken: this.signToken(user, true), refreshToken: this.signToken(user, false) };
   }
 
-  signToken(user: Pick<UserEntity, 'id' | 'userName' | 'userRole'>) {
-    const payload = { sub: user.id, name: user.userName, role: user.userRole };
-    return this.jwtService.sign(payload);
+  signToken(user: UserEntity, isRefreshToken: boolean): string {
+    const payload = {
+      sub: user.id,
+      name: user.userName,
+      role: user.userRole,
+      type: isRefreshToken ? 'refresh' : 'access',
+    };
+    return this.jwtService.sign(payload, {
+      expiresIn: isRefreshToken ? 3600 : 300,
+    });
   }
 
   async encodePassword(userPassword: string) {
