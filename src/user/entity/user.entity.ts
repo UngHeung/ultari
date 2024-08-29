@@ -1,8 +1,12 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { UserProfileEntity } from './user-profile.entity';
 import { BaseModel } from 'src/common/entity/base.entity';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Length } from 'class-validator';
 import { Exclude } from 'class-transformer';
+import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
+import { stringValidationMessage } from 'src/common/validator/message/type-validation.message';
+import { nullValidationMessage } from 'src/common/validator/message/null-validation.message';
+import { emailValidationMessage } from 'src/common/validator/message/email-validation.message';
 
 export enum RoleEnum {
   USER = 'ROLE_USER',
@@ -13,44 +17,35 @@ export enum RoleEnum {
 
 @Entity()
 export class UserEntity extends BaseModel {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({
-    unique: true,
-    length: 15,
-  })
-  @IsString({ message: '아이디는 string 값을 입력해야 합니다.' })
-  @IsNotEmpty({ message: '아이디를 입력해주세요.' })
+  @Column({ unique: true })
+  @IsString({ message: stringValidationMessage })
+  @IsNotEmpty({ message: nullValidationMessage })
+  @Length(6, 15, { message: lengthValidationMessage })
   userAccount: string;
 
   @Column()
-  @IsString({ message: '비밀번호는 string 값을 입력해야 합니다.' })
-  @IsNotEmpty({ message: '비밀번호를 입력해주세요.' })
+  @IsString({ message: stringValidationMessage })
+  @IsNotEmpty({ message: nullValidationMessage })
+  @Length(8, 20, { message: lengthValidationMessage })
   @Exclude({ toPlainOnly: true })
   userPassword: string;
 
-  @Column({
-    length: 10,
-  })
-  @IsString({ message: '이름은 string 값을 입력해야 합니다.' })
-  @IsNotEmpty({ message: '이름을 입력해주세요.' })
+  @Column()
+  @IsString({ message: stringValidationMessage })
+  @IsNotEmpty({ message: nullValidationMessage })
+  @Length(2, 10, { message: lengthValidationMessage })
   userName: string;
 
-  @Column({
-    unique: true,
-    length: 13,
-  })
-  @IsString({ message: '연락처는 string 값을 입력해야 합니다.' })
-  @IsNotEmpty({ message: '연락처를 입력해주세요.' })
+  @Column({ unique: true })
+  @IsString({ message: stringValidationMessage })
+  @IsNotEmpty({ message: nullValidationMessage })
+  @Length(12, 13, { message: lengthValidationMessage })
   userPhone: string;
 
-  @Column({
-    unique: true,
-    length: 30,
-  })
-  @IsString({ message: '이메일은 string 값을 입력해야 합니다.' })
-  @IsNotEmpty({ message: '이메일을 입력해주세요.' })
+  @Column({ unique: true })
+  @IsString({ message: stringValidationMessage })
+  @IsNotEmpty({ message: nullValidationMessage })
+  @IsEmail({}, { message: emailValidationMessage })
   userEmail: string;
 
   @Column({
