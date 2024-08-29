@@ -1,10 +1,8 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseModel } from 'src/common/entity/base.entity';
+import { Column, Entity } from 'typeorm';
 
 @Entity()
-export class UserProfileEntity extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class UserProfileEntity extends BaseModel {
   @Column({
     type: 'varchar',
   })

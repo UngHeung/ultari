@@ -10,15 +10,12 @@ import * as config from 'config';
 import { UserProfileEntity } from '../user/entity/user-profile.entity';
 import { UserService } from 'src/user/user.service';
 
-const jwtConfig: { secret: string; expiresIn: number } = config.get('jwt');
+const jwtConfig: { secret: string; accessExpiresIn: number; refreshExpiresIn: number } = config.get('jwt');
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: jwtConfig.secret,
-      signOptions: {
-        expiresIn: jwtConfig.expiresIn,
-      },
     }),
     TypeOrmModule.forFeature([UserEntity, UserProfileEntity]),
   ],

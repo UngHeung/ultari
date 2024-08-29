@@ -7,4 +7,5 @@ db:
   database: 'ultari'
 
 jwt:
-  expiresIn: 3600
+  accessExpiresIn: 3600
+  refreshExpiresIn: 300
