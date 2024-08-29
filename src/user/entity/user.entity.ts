@@ -27,7 +27,7 @@ export class UserEntity extends BaseModel {
   @Column()
   @IsString({ message: '비밀번호는 string 값을 입력해야 합니다.' })
   @IsNotEmpty({ message: '비밀번호를 입력해주세요.' })
-  @Exclude()
+  @Exclude({ toPlainOnly: true })
   userPassword: string;
 
   @Column({
