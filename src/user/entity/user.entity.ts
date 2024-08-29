@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'ty
 import { UserProfileEntity } from './user-profile.entity';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { IsNotEmpty, IsString } from 'class-validator';
+import { Exclude } from 'class-transformer';
 
 export enum RoleEnum {
   USER = 'ROLE_USER',
@@ -26,6 +27,7 @@ export class UserEntity extends BaseModel {
   @Column()
   @IsString({ message: '비밀번호는 string 값을 입력해야 합니다.' })
   @IsNotEmpty({ message: '비밀번호를 입력해주세요.' })
+  @Exclude()
   userPassword: string;
 
   @Column({
