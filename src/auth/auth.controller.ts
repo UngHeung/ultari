@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Headers, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthSignUpDto } from './dto/auth-signup.dto';
 import { AuthLoginDto } from './dto/auth-login.dto';
@@ -16,5 +16,27 @@ export class AuthController {
   @Post('/login')
   loginUser(@Body() authLoginDto: AuthLoginDto): Promise<{ accessToken: string }> {
     return this.authService.loginUser(authLoginDto);
+  }
+
+  @Post('/reissue/access')
+  @UseGuards()
+  reissueAccessToken(@Headers('authorization') rawToken: string) {
+    const token = this.authService.extractToken(rawToken, true);
+    const newToken = this.authService.reissueToken(token, false);
+
+    return {
+      accessToken: newToken,
+    };
+  }
+
+  @Post('/reissue/refresh')
+  @UseGuards()
+  reissueRefreshToken(@Headers('authorization') rawToken: string) {
+    const token = this.authService.extractToken(rawToken, false);
+    const newToken = this.authService.reissueToken(token, false);
+
+    return {
+      refreshToken: newToken,
+    };
   }
 }
