@@ -4,7 +4,6 @@ import { UserEntity } from './entity/user.entity';
 import { Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
-import { CommonService } from 'src/common/common.service';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -12,7 +11,6 @@ export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-    private readonly commonService: CommonService,
   ) {}
 
   /**
@@ -51,7 +49,7 @@ export class UserService {
    * 3. return user
    */
   async getUserById(id: number): Promise<UserEntity> {
-    const user = await this.userRepository.findOne({ where: { id }, relations: ['userProfile'] });
+    const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException(`계정이 존재하지 않습니다. ID : ${id}`);
     return user;
   }
@@ -74,7 +72,7 @@ export class UserService {
    * 5. update data for target user
    * 6. save updated user
    */
-  async updateUser(id: number, updateUserDto: UpdateUserDto, userProfilePath: string): Promise<UserEntity> {
+  async updateUser(id: number, updateUserDto: UpdateUserDto, userProfile: string): Promise<UserEntity> {
     const user = await this.getUserById(id);
     const { userPassword, userPhone, userEmail }: UpdateUserDto = updateUserDto;
 
@@ -82,17 +80,35 @@ export class UserService {
       throw new UnauthorizedException('비밀번호를 확인해주세요.');
     }
 
-    const userExists = await this.userRepository.exists({
-      where: [{ userEmail }, { userPhone }],
-    });
+    if (userPhone && user.userPhone !== userPhone) {
+      const userPhoneExists = await this.userRepository.findOne({
+        where: { userPhone },
+      });
 
-    if (userExists) {
-      throw new ConflictException('중복된 값입니다.');
+      if (userPhoneExists) {
+        throw new ConflictException('이미 등록된 연락처입니다.');
+      }
+
+      user.userPhone = userPhone;
     }
 
-    userPhone && (user.userPhone = userPhone);
-    userEmail && (user.userEmail = userEmail);
-    userProfilePath && (user.userProfilePath = userProfilePath);
+    if (userEmail && user.userEmail !== userEmail) {
+      const userExists = await this.userRepository.findOne({
+        where: { userEmail },
+      });
+
+      if (userExists) {
+        throw new ConflictException('이미 등록된 이메일 입니다.');
+      }
+
+      user.userEmail = userEmail;
+    }
+
+    console.log(userProfile);
+
+    if (userProfile) {
+      user.userProfilePath = userProfile;
+    }
 
     this.userRepository.save(user);
 
