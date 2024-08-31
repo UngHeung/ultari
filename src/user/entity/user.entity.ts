@@ -7,7 +7,7 @@ import { stringValidationMessage } from 'src/common/validator/message/type-valid
 import { nullValidationMessage } from 'src/common/validator/message/null-validation.message';
 import { emailValidationMessage } from 'src/common/validator/message/email-validation.message';
 import { join } from 'path';
-import { POST_PUBLIC_IMAGE_PATH } from 'src/common/const/path.const';
+import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
 
 export enum RoleEnum {
   USER = 'ROLE_USER',
@@ -47,7 +47,7 @@ export class UserEntity extends BaseModel {
   @Column({
     nullable: true,
   })
-  @Transform(({ value }) => value && `${join(POST_PUBLIC_IMAGE_PATH, value)}`)
+  @Transform(({ value }) => value && `${join(PROFILE_IMAGE_PATH, value)}`)
   userProfilePath?: string;
 
   @Column({
