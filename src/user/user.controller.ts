@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserEntity } from './entity/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -26,5 +26,12 @@ export class UserController {
   @UseInterceptors(FileInterceptor('image'))
   updateUser(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.updateUser(id, updateUserDto);
+  }
+
+  @Post('image')
+  @UseInterceptors(FileInterceptor('image'))
+  @UseGuards(AccessTokenGuard)
+  uploadImage(@UploadedFile() file?: Express.Multer.File) {
+    return { filename: file.filename };
   }
 }
