@@ -68,7 +68,7 @@ export class AuthService {
   }
 
   /**
-   * 1. receive header and type of token
+   * 1. receive header and type of token (Bearer or Basic)
    * 2. extract token from header
    * 3. validate token
    * 4. return token
