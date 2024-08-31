@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entity/user.entity';
 import { Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
-import * as bcrypt from 'bcryptjs';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
@@ -25,7 +25,7 @@ export class UserService {
     });
 
     if (userExists) {
-      throw new ConflictException();
+      throw new ConflictException('중복된 값입니다.');
     }
 
     const newUser = this.userRepository.create(authSignUpDto);
@@ -68,14 +68,25 @@ export class UserService {
    * 1. receive data for update user information
    * 2. request get user by user id
    * 3. compare input password and stored password
-   * 4. update data for target user
-   * 5. save updated user
+   * 4. check duplicated user email and phone
+   * 5. update data for target user
+   * 6. save updated user
    */
   async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<UserEntity> {
     const user = await this.getUserById(id);
     const { userPassword, userPhone, userEmail, userProfile }: UpdateUserDto = updateUserDto;
 
-    if (!(await bcrypt.compare(userPassword, user.userPassword))) throw new UnauthorizedException();
+    if (!(await bcrypt.compare(userPassword, user.userPassword))) {
+      throw new UnauthorizedException('비밀번호를 확인해주세요.');
+    }
+
+    const userExists = await this.userRepository.exists({
+      where: [{ userEmail }, { userPhone }],
+    });
+
+    if (userExists) {
+      throw new ConflictException('중복된 값입니다.');
+    }
 
     userPhone && (user.userPhone = userPhone);
     userEmail && (user.userEmail = userEmail);
