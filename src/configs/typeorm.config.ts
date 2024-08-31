@@ -1,7 +1,6 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE } from './const/config.const';
-import { UserProfileEntity } from 'src/user/entity/user-profile.entity';
 
 export const getTypeOrmConfig = (): TypeOrmModuleOptions => {
   return {
@@ -12,7 +11,7 @@ export const getTypeOrmConfig = (): TypeOrmModuleOptions => {
     password: process.env[DB_PASSWORD],
     database: process.env[DB_DATABASE],
     autoLoadEntities: true,
-    entities: [UserEntity, UserProfileEntity],
+    entities: [UserEntity],
     synchronize: true,
   };
 };
