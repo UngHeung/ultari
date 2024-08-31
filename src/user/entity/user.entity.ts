@@ -20,38 +20,33 @@ export enum RoleEnum {
 export class UserEntity extends BaseModel {
   @Column({ unique: true })
   @IsString({ message: stringValidationMessage })
-  @IsNotEmpty({ message: nullValidationMessage })
   @Length(6, 15, { message: lengthValidationMessage })
   userAccount: string;
 
   @Column()
   @IsString({ message: stringValidationMessage })
-  @IsNotEmpty({ message: nullValidationMessage })
   @Length(8, 20, { message: lengthValidationMessage })
   @Exclude({ toPlainOnly: true })
   userPassword: string;
 
   @Column()
   @IsString({ message: stringValidationMessage })
-  @IsNotEmpty({ message: nullValidationMessage })
   @Length(2, 10, { message: lengthValidationMessage })
   userName: string;
 
   @Column({ unique: true })
   @IsString({ message: stringValidationMessage })
-  @IsNotEmpty({ message: nullValidationMessage })
   @Length(12, 13, { message: lengthValidationMessage })
   userPhone: string;
 
   @Column({ unique: true })
   @IsString({ message: stringValidationMessage })
-  @IsNotEmpty({ message: nullValidationMessage })
   @IsEmail({}, { message: emailValidationMessage })
   userEmail: string;
 
-  @Column()
-  @IsString({ message: stringValidationMessage })
-  @IsOptional()
+  @Column({
+    nullable: true,
+  })
   @Transform(({ value }) => value && `${join(POST_PUBLIC_IMAGE_PATH, value)}`)
   userProfilePath?: string;
 

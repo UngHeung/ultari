@@ -7,5 +7,5 @@ export class AuthSignUpDto extends PickType(UserEntity, [
   'userName',
   'userPhone',
   'userEmail',
-  'userProfile',
+  'userProfilePath',
 ]) {}
