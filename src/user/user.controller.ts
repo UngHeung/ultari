@@ -9,16 +9,19 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('/')
+  @UseGuards(AccessTokenGuard)
   getUsers(): Promise<UserEntity[]> {
     return this.userService.getUsers();
   }
 
   @Get('/:id')
+  @UseGuards(AccessTokenGuard)
   getUserById(@Param('id') id: number) {
     return this.userService.getUserById(id);
   }
 
   @Patch('/:id')
+  @UseGuards(AccessTokenGuard)
   updateUser(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.updateUser(id, updateUserDto);
   }
