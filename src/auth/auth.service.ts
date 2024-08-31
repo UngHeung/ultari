@@ -40,7 +40,7 @@ export class AuthService {
   async loginUser(authLoginDto: AuthLoginDto): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await this.authenticateAccountAndPassword(authLoginDto);
 
-    return { accessToken: this.signToken(user, true), refreshToken: this.signToken(user, false) };
+    return { accessToken: this.signToken(user, false), refreshToken: this.signToken(user, true) };
   }
 
   /**
