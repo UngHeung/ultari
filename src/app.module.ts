@@ -5,6 +5,7 @@ import { UserModule } from './user/user.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { getTypeOrmConfig } from './configs/typeorm.config';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { getTypeOrmConfig } from './configs/typeorm.config';
     TypeOrmModule.forRoot(getTypeOrmConfig()),
     AuthModule,
     UserModule,
+    CommonModule,
   ],
   providers: [{ provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor }],
 })
