@@ -4,6 +4,7 @@ import { UserEntity } from './entity/user.entity';
 import { Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
+import { CommonService } from 'src/common/common.service';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    private readonly commonService: CommonService,
   ) {}
 
   /**
@@ -72,9 +74,9 @@ export class UserService {
    * 5. update data for target user
    * 6. save updated user
    */
-  async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<UserEntity> {
+  async updateUser(id: number, updateUserDto: UpdateUserDto, userProfilePath: string): Promise<UserEntity> {
     const user = await this.getUserById(id);
-    const { userPassword, userPhone, userEmail, userProfile }: UpdateUserDto = updateUserDto;
+    const { userPassword, userPhone, userEmail }: UpdateUserDto = updateUserDto;
 
     if (!(await bcrypt.compare(userPassword, user.userPassword))) {
       throw new UnauthorizedException('비밀번호를 확인해주세요.');
@@ -90,7 +92,7 @@ export class UserService {
 
     userPhone && (user.userPhone = userPhone);
     userEmail && (user.userEmail = userEmail);
-    userProfile && (user.userProfile = userProfile);
+    userProfilePath && (user.userProfilePath = userProfilePath);
 
     this.userRepository.save(user);
 
