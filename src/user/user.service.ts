@@ -104,8 +104,6 @@ export class UserService {
       user.userEmail = userEmail;
     }
 
-    console.log(userProfile);
-
     if (userProfile) {
       user.userProfilePath = userProfile;
     }
