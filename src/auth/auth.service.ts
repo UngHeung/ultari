@@ -38,14 +38,28 @@ export class AuthService {
    * 4. return access token and refresh tokens
    */
   async loginUser(authLoginDto: AuthLoginDto): Promise<{ accessToken: string; refreshToken: string }> {
-    const { userAccount, userPassword } = authLoginDto;
-    const user = await this.userService.getUserByUserAccount(userAccount);
+    const user = await this.authenticateAccountAndPassword(authLoginDto);
 
-    if (!user || !(await bcrypt.compare(userPassword, user.userPassword))) {
+    return { accessToken: this.signToken(user, true), refreshToken: this.signToken(user, false) };
+  }
+
+  /**
+   *
+   */
+  async authenticateAccountAndPassword(user: AuthLoginDto): Promise<UserEntity> {
+    const existsUser = await this.userService.getUserByUserAccount(user.userAccount);
+
+    if (!existsUser) {
+      throw new UnauthorizedException('존재하지 않는 사용자입니다.');
+    }
+
+    const passOk = await bcrypt.compare(user.userPassword, existsUser.userPassword);
+
+    if (!passOk) {
       throw new UnauthorizedException('아이디 또는 비밀번호를 확인해주세요.');
     }
 
-    return { accessToken: this.signToken(user, true), refreshToken: this.signToken(user, false) };
+    return existsUser;
   }
 
   /**
@@ -112,9 +126,9 @@ export class AuthService {
       throw new UnauthorizedException('잘못된 토큰입니다.');
     }
 
-    const [email, password] = split;
+    const [userAccount, userPassword] = split;
 
-    return { email, password };
+    return { userAccount, userPassword };
   }
 
   /**
