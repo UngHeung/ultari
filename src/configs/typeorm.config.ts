@@ -1,6 +1,12 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE } from './const/config.const';
+import {
+  DB_HOST,
+  DB_PORT,
+  DB_USERNAME,
+  DB_PASSWORD,
+  DB_DATABASE,
+} from './const/config.const';
 
 export const getTypeOrmConfig = (): TypeOrmModuleOptions => {
   return {

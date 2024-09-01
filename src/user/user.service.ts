@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -10,11 +9,9 @@ import { UserEntity } from './entity/user.entity';
 import { Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
-import { promises } from 'fs';
-import { join } from 'path';
 import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
-import * as bcrypt from 'bcryptjs';
 import { CommonService } from 'src/common/common.service';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
@@ -32,15 +29,24 @@ export class UserService {
   async createUser(authSignUpDto: AuthSignUpDto) {
     const { userAccount, userEmail, userPhone }: AuthSignUpDto = authSignUpDto;
 
-    if (userAccount && (await this.userRepository.exists({ where: { userAccount } }))) {
+    if (
+      userAccount &&
+      (await this.userRepository.exists({ where: { userAccount } }))
+    ) {
       throw new ConflictException('이미 등록된 계정입니다.');
     }
 
-    if (userPhone && (await this.userRepository.exists({ where: { userPhone } }))) {
+    if (
+      userPhone &&
+      (await this.userRepository.exists({ where: { userPhone } }))
+    ) {
       throw new ConflictException('이미 등록된 연락처입니다.');
     }
 
-    if (userEmail && (await this.userRepository.exists({ where: { userEmail } }))) {
+    if (
+      userEmail &&
+      (await this.userRepository.exists({ where: { userEmail } }))
+    ) {
       throw new ConflictException('이미 등록된 이메일입니다.');
     }
 
@@ -66,7 +72,8 @@ export class UserService {
    */
   async getUserById(id: number): Promise<UserEntity> {
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException(`계정이 존재하지 않습니다. ID : ${id}`);
+    if (!user)
+      throw new NotFoundException(`계정이 존재하지 않습니다. ID : ${id}`);
     return user;
   }
 
@@ -89,7 +96,11 @@ export class UserService {
    * 6. if exist user profile in recieved user data request delete current profile and save new profile
    * 7. save updated user
    */
-  async updateUser(id: number, updateUserDto: UpdateUserDto, userProfile: string): Promise<UserEntity> {
+  async updateUser(
+    id: number,
+    updateUserDto: UpdateUserDto,
+    userProfile: string,
+  ): Promise<UserEntity> {
     const user = await this.getUserById(id);
     const { userPassword, userPhone, userEmail }: UpdateUserDto = updateUserDto;
 
@@ -122,7 +133,8 @@ export class UserService {
     }
 
     if (userProfile) {
-      user.userProfilePath && this.commonService.removeFile(PROFILE_IMAGE_PATH, user.userProfilePath);
+      user.userProfilePath &&
+        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.userProfilePath);
       user.userProfilePath = userProfile;
     }
 

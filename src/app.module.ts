@@ -26,6 +26,8 @@ import { PostModule } from './post/post.module';
     CommonModule,
     PostModule,
   ],
-  providers: [{ provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor }],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor },
+  ],
 })
 export class AppModule {}

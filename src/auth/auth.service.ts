@@ -7,7 +7,11 @@ import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcryptjs';
 import * as config from 'config';
 
-const jwtConfig: { secret: string; accessExpiresIn: number; refreshExpiresIn: number } = config.get('jwt');
+const jwtConfig: {
+  secret: string;
+  accessExpiresIn: number;
+  refreshExpiresIn: number;
+} = config.get('jwt');
 
 @Injectable()
 export class AuthService {
@@ -37,23 +41,35 @@ export class AuthService {
    * 3. request token
    * 4. return access token and refresh tokens
    */
-  async loginUser(authLoginDto: AuthLoginDto): Promise<{ accessToken: string; refreshToken: string }> {
+  async loginUser(
+    authLoginDto: AuthLoginDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await this.authenticateAccountAndPassword(authLoginDto);
 
-    return { accessToken: this.signToken(user, false), refreshToken: this.signToken(user, true) };
+    return {
+      accessToken: this.signToken(user, false),
+      refreshToken: this.signToken(user, true),
+    };
   }
 
   /**
    *
    */
-  async authenticateAccountAndPassword(user: AuthLoginDto): Promise<UserEntity> {
-    const existsUser = await this.userService.getUserByUserAccount(user.userAccount);
+  async authenticateAccountAndPassword(
+    user: AuthLoginDto,
+  ): Promise<UserEntity> {
+    const existsUser = await this.userService.getUserByUserAccount(
+      user.userAccount,
+    );
 
     if (!existsUser) {
       throw new UnauthorizedException('존재하지 않는 사용자입니다.');
     }
 
-    const passOk = await bcrypt.compare(user.userPassword, existsUser.userPassword);
+    const passOk = await bcrypt.compare(
+      user.userPassword,
+      existsUser.userPassword,
+    );
 
     if (!passOk) {
       throw new UnauthorizedException('아이디 또는 비밀번호를 확인해주세요.');
@@ -77,7 +93,9 @@ export class AuthService {
 
     return this.jwtService.sign(payload, {
       secret: jwtConfig.secret,
-      expiresIn: isRefreshToken ? jwtConfig.refreshExpiresIn : jwtConfig.accessExpiresIn,
+      expiresIn: isRefreshToken
+        ? jwtConfig.refreshExpiresIn
+        : jwtConfig.accessExpiresIn,
     });
   }
 
@@ -140,7 +158,9 @@ export class AuthService {
     const decoded = this.verifyToken(token);
 
     if (decoded.type !== 'refresh') {
-      throw new UnauthorizedException('Refresh 토큰으로만 토큰 재발급이 가능합니다.');
+      throw new UnauthorizedException(
+        'Refresh 토큰으로만 토큰 재발급이 가능합니다.',
+      );
     }
 
     return this.signToken({ ...decoded }, isRefreshToken);

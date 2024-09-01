@@ -13,7 +13,10 @@ export const multerModuleOptions: MulterModuleOptions = {
     const ext = extname(file.originalname);
 
     if (ext !== '.jpg' && ext !== '.jpeg' && ext !== '.png' && ext !== '.gif') {
-      return callback(new BadRequestException('업로드 가능한 확장자 : [jpg, jpeg, png, gif]'), false);
+      return callback(
+        new BadRequestException('업로드 가능한 확장자 : [jpg, jpeg, png, gif]'),
+        false,
+      );
     }
 
     return callback(null, true);
