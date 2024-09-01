@@ -10,10 +10,10 @@ import { UserEntity } from './entity/user.entity';
 import { Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
-import * as bcrypt from 'bcryptjs';
-import { promises, rename } from 'fs';
+import { promises } from 'fs';
 import { join } from 'path';
 import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
