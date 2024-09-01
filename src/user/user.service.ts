@@ -1,10 +1,19 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entity/user.entity';
 import { Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
 import * as bcrypt from 'bcryptjs';
+import { promises, rename } from 'fs';
+import { join } from 'path';
+import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
 
 @Injectable()
 export class UserService {
@@ -20,12 +29,17 @@ export class UserService {
    */
   async createUser(authSignUpDto: AuthSignUpDto) {
     const { userAccount, userEmail, userPhone }: AuthSignUpDto = authSignUpDto;
-    const userExists = await this.userRepository.exists({
-      where: [{ userAccount }, { userEmail }, { userPhone }],
-    });
 
-    if (userExists) {
-      throw new ConflictException('중복된 값입니다.');
+    if (userAccount && (await this.userRepository.exists({ where: { userAccount } }))) {
+      throw new ConflictException('이미 등록된 계정입니다.');
+    }
+
+    if (userPhone && (await this.userRepository.exists({ where: { userPhone } }))) {
+      throw new ConflictException('이미 등록된 연락처입니다.');
+    }
+
+    if (userEmail && (await this.userRepository.exists({ where: { userEmail } }))) {
+      throw new ConflictException('이미 등록된 이메일입니다.');
     }
 
     const newUser = this.userRepository.create(authSignUpDto);
@@ -70,7 +84,8 @@ export class UserService {
    * 3. compare input password and stored password
    * 4. check duplicated user email and phone
    * 5. update data for target user
-   * 6. save updated user
+   * 6. if exist user profile in recieved user data request delete current profile and save new profile
+   * 7. save updated user
    */
   async updateUser(id: number, updateUserDto: UpdateUserDto, userProfile: string): Promise<UserEntity> {
     const user = await this.getUserById(id);
@@ -105,11 +120,45 @@ export class UserService {
     }
 
     if (userProfile) {
+      user.userProfilePath && this.removeFile(PROFILE_IMAGE_PATH, user.userProfilePath);
       user.userProfilePath = userProfile;
     }
 
     this.userRepository.save(user);
 
     return user;
+  }
+
+  /**
+   * 1. receive current file name with extention
+   * 2. find current profile by received file path and file name
+   * 3. delete current profile
+   */
+  async removeFile(path: string, fileName: string) {
+    const removeFilePath = join(path, fileName);
+
+    await promises.rm(removeFilePath);
+
+    return true;
+  }
+
+  /**
+   * 1. receive current folder and new folder name and file name to move
+   * 2. move file to new folder from current folder
+   */
+  async renameFile(currentPath: string, newPath: string, fileName: string) {
+    const renameFilePath = join(currentPath, fileName);
+
+    try {
+      await promises.access(renameFilePath);
+    } catch (error) {
+      throw new BadRequestException('존재하지 않는 파일입니다.');
+    }
+
+    const newFolderPath = join(newPath, fileName);
+
+    await promises.rename(renameFilePath, newFolderPath);
+
+    return true;
   }
 }
