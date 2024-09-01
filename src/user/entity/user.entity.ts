@@ -1,4 +1,4 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { IsEmail, IsString, Length } from 'class-validator';
 import { Exclude, Transform } from 'class-transformer';
@@ -7,6 +7,7 @@ import { stringValidationMessage } from 'src/common/validator/message/type-valid
 import { emailValidationMessage } from 'src/common/validator/message/email-validation.message';
 import { join } from 'path';
 import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
+import { PostEntity } from 'src/post/entity/post.entity';
 
 export enum RoleEnum {
   USER = 'ROLE_USER',
@@ -54,4 +55,7 @@ export class UserEntity extends BaseModel {
     default: RoleEnum.USER,
   })
   userRole: string;
+
+  @OneToMany(() => PostEntity, post => post.PostAuthor)
+  posts: PostEntity[];
 }

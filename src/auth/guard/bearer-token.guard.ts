@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import { UserService } from 'src/user/user.service';
 
@@ -19,7 +24,9 @@ export class BearerTokenGuard implements CanActivate {
 
     const token = this.authService.extractToken(rawToken, true);
     const result = await this.authService.verifyToken(token);
-    const user = await this.userService.getUserByUserAccount(result.userAccount);
+    const user = await this.userService.getUserByUserAccount(
+      result.userAccount,
+    );
 
     request.user = user;
     request.token = token;

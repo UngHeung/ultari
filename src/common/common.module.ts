@@ -7,7 +7,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
 
 @Module({
-  imports: [MulterModule.register(multerModuleOptions), TypeOrmModule.forFeature([UserEntity])],
+  imports: [
+    MulterModule.register(multerModuleOptions),
+    TypeOrmModule.forFeature([UserEntity]),
+  ],
   exports: [CommonService],
   controllers: [CommonController],
   providers: [CommonService],

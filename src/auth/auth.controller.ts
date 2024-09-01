@@ -17,7 +17,9 @@ export class AuthController {
 
   @Post('/login/account')
   @UseGuards(BasicTokenGuard)
-  loginUser(@Body() authLoginDto: AuthLoginDto): Promise<{ accessToken: string }> {
+  loginUser(
+    @Body() authLoginDto: AuthLoginDto,
+  ): Promise<{ accessToken: string }> {
     return this.authService.loginUser(authLoginDto);
   }
 

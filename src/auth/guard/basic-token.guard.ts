@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from '../auth.service';
 
 @Injectable()
@@ -14,8 +19,12 @@ export class BasicTokenGuard implements CanActivate {
     }
 
     const token = this.authService.extractToken(rawToken, false);
-    const { userAccount, userPassword } = this.authService.decodeBasicToken(token);
-    const user = await this.authService.authenticateAccountAndPassword({ userAccount, userPassword });
+    const { userAccount, userPassword } =
+      this.authService.decodeBasicToken(token);
+    const user = await this.authService.authenticateAccountAndPassword({
+      userAccount,
+      userPassword,
+    });
 
     request.user = user;
 
