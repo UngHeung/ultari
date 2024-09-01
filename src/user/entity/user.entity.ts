@@ -1,10 +1,9 @@
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { BaseModel } from 'src/common/entity/base.entity';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { IsEmail, IsString, Length } from 'class-validator';
 import { Exclude, Transform } from 'class-transformer';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { stringValidationMessage } from 'src/common/validator/message/type-validation.message';
-import { nullValidationMessage } from 'src/common/validator/message/null-validation.message';
 import { emailValidationMessage } from 'src/common/validator/message/email-validation.message';
 import { join } from 'path';
 import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
