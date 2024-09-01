@@ -8,6 +8,7 @@ import { getTypeOrmConfig } from './configs/typeorm.config';
 import { CommonModule } from './common/common.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { PUBLIC_FOLDER_PATH } from './common/const/path.const';
+import { PostModule } from './post/post.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PUBLIC_FOLDER_PATH } from './common/const/path.const';
     AuthModule,
     UserModule,
     CommonModule,
+    PostModule,
   ],
   providers: [{ provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor }],
 })
