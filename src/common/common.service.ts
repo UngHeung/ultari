@@ -12,12 +12,15 @@ import {
 import { BaseModel } from './entity/base.entity';
 import { BasePaginateDto } from './dto/base-paginate.dto';
 import { FILTER_MAPPER } from './const/filter-mapper.const';
+import { ConfigService } from '@nestjs/config';
+import { DB_HOST } from 'src/configs/const/config.const';
 
 @Injectable()
 export class CommonService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -32,9 +35,9 @@ export class CommonService {
     path: string,
   ) {
     if (dto.page) {
-      return;
+      return this.pagePaginate(dto, repository, overrideFindOptions);
     } else {
-      return;
+      return this.cursorPaginate(dto, repository, overrideFindOptions, path);
     }
   }
 
@@ -65,8 +68,50 @@ export class CommonService {
     dto: BasePaginateDto,
     repository: Repository<T>,
     overrideFindOptions: FindManyOptions<T> = {},
-    path,
-  ) {}
+    path: string,
+  ) {
+    const findOptions = this.composeFindOptions<T>(dto);
+    const results = await repository.find({
+      ...findOptions,
+      ...overrideFindOptions,
+    });
+    const lastItem =
+      results.length > 0 && results.length === dto.take
+        ? results[results.length - 1]
+        : null;
+    const protocol = 'http';
+    const host = 'localhost:3000';
+    const nextUrl = lastItem && new URL(`${protocol}://${host}/${path}`);
+
+    if (nextUrl) {
+      for (const key of Object.keys(dto)) {
+        if (dto[key]) {
+          key !== 'where__id__more_than' &&
+            key !== 'where__id__more_less' &&
+            nextUrl.searchParams.append(key, dto[key]);
+        }
+      }
+
+      let key: string;
+
+      if (dto.order__createAt === 'ASC') {
+        key = 'where__id__more_than';
+      } else {
+        key = 'where__id__less_than';
+      }
+
+      nextUrl.searchParams.append(key, lastItem.id.toString());
+    }
+
+    return {
+      data: results,
+      cursor: {
+        after: lastItem?.id ?? null,
+      },
+      count: results.length,
+      next: nextUrl?.toString() ?? null,
+    };
+  }
 
   /**
    *
