@@ -3,13 +3,52 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { promises } from 'fs';
 import { join } from 'path';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
+import { BaseModel } from './entity/base.entity';
+import { BasePaginateDto } from './dto/base-paginate.dto';
 
 @Injectable()
 export class CommonService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+  ) {}
+
+  /**
+   * 1. receive base paginate dto and additional find options, repository from target entity, next page path
+   * 2. if dto has page, return page based paginate
+   * 3. if dto has not page, return cursor based paginate
+   */
+  paginate<T extends BaseModel>(
+    dto: BasePaginateDto,
+    repository: Repository<T>,
+    overrideFindOptions: FindManyOptions<T> = {},
+    path: string,
+  ) {
+    if (dto.page) {
+      return;
+    } else {
+      return;
+    }
+  }
+
+  /**
+   *
+   */
+  private async pagePaginate<T extends BaseModel>(
+    dto: BasePaginateDto,
+    repository: Repository<T>,
+    overrideFindOptions: FindManyOptions<T> = {},
+  ) {}
+
+  /**
+   *
+   */
+  private async cursorPaginate<T extends BaseModel>(
+    dto: BasePaginateDto,
+    repository: Repository<T>,
+    overrideFindOptions: FindManyOptions<T> = {},
+    path,
   ) {}
 
   /**
