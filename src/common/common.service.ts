@@ -3,9 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { promises } from 'fs';
 import { join } from 'path';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { FindManyOptions, Repository } from 'typeorm';
+import {
+  FindManyOptions,
+  FindOptionsOrder,
+  FindOptionsWhere,
+  Repository,
+} from 'typeorm';
 import { BaseModel } from './entity/base.entity';
 import { BasePaginateDto } from './dto/base-paginate.dto';
+import { FILTER_MAPPER } from './const/filter-mapper.const';
 
 @Injectable()
 export class CommonService {
@@ -39,7 +45,18 @@ export class CommonService {
     dto: BasePaginateDto,
     repository: Repository<T>,
     overrideFindOptions: FindManyOptions<T> = {},
-  ) {}
+  ) {
+    const findOptions = this.composeFindOptions<T>(dto);
+    const [data, count] = await repository.findAndCount({
+      ...findOptions,
+      ...overrideFindOptions,
+    });
+
+    return {
+      data,
+      total: count,
+    };
+  }
 
   /**
    *
@@ -50,6 +67,35 @@ export class CommonService {
     overrideFindOptions: FindManyOptions<T> = {},
     path,
   ) {}
+
+  /**
+   *
+   */
+  private parseWhereFilter<T extends BaseModel>(
+    key: string,
+    value: any,
+  ): FindOptionsWhere<T> | FindOptionsOrder<T> {
+    const options: FindOptionsWhere<T> = {};
+    const split = key.split('__');
+
+    if (split.length !== 2 && split.length !== 3) {
+      throw new BadRequestException(`잘못된 key 값입니다. key : ${key}`);
+    }
+
+    if (split.length === 2) {
+      const [_, field] = split;
+
+      options[field] = value;
+    } else {
+      const [_, field, operator] = split;
+
+      operator === 'i_like'
+        ? (options[field] = FILTER_MAPPER[operator](`%${value}%`))
+        : (options[field] = FILTER_MAPPER[operator](value));
+    }
+
+    return options;
+  }
 
   /**
    * 1. receive current file name with extention
