@@ -71,7 +71,36 @@ export class CommonService {
   /**
    *
    */
-  private parseWhereFilter<T extends BaseModel>(
+  private composeFindOptions<T extends BaseModel>(
+    dto: BasePaginateDto,
+  ): FindManyOptions<T> {
+    let where: FindOptionsWhere<T> = {};
+    let order: FindOptionsOrder<T> = {};
+
+    for (const [key, value] of Object.entries(dto)) {
+      if (key.startsWith('where__')) {
+        where = {
+          ...where,
+          ...this.parseFilter(key, value),
+        };
+      } else if (key.startsWith('order__')) {
+        order = {
+          ...order,
+          ...this.parseFilter(key, value),
+        };
+      }
+    }
+
+    return {
+      where,
+      order,
+    };
+  }
+
+  /**
+   *
+   */
+  private parseFilter<T extends BaseModel>(
     key: string,
     value: any,
   ): FindOptionsWhere<T> | FindOptionsOrder<T> {
