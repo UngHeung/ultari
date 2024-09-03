@@ -21,30 +21,31 @@ export class AuthService {
   ) {}
 
   /**
-   * 1. receive user information
-   * 2. request encrypt password
-   * 3. store encrypted password in user
-   * 4. request create new user
+   * @param AuthSignUpDto
+   * 1. request encrypt password
+   * 2. store encrypted password in user
+   * 3. request create new user
    */
-  async registerUser(authSignUpDto: AuthSignUpDto): Promise<UserEntity> {
-    const userPassword = await this.encodePassword(authSignUpDto.userPassword);
+  async registerUser(dto: AuthSignUpDto): Promise<UserEntity> {
+    const password = await this.encodePassword(dto.password);
 
     return await this.userService.createUser({
-      ...authSignUpDto,
-      userPassword,
+      ...dto,
+      password,
     });
   }
 
   /**
-   * 1. receive user account and password
-   * 2. validate user account and password
-   * 3. request token
-   * 4. return access token and refresh tokens
+   * @param account
+   * @param password
+   * 1. validate account and password
+   * 2. request token
+   * 3. return access token and refresh tokens
    */
   async loginUser(
-    authLoginDto: AuthLoginDto,
+    dto: AuthLoginDto,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const user = await this.authenticateAccountAndPassword(authLoginDto);
+    const user = await this.authenticateAccountAndPassword(dto);
 
     return {
       accessToken: this.signToken(user, false),
@@ -55,21 +56,14 @@ export class AuthService {
   /**
    *
    */
-  async authenticateAccountAndPassword(
-    user: AuthLoginDto,
-  ): Promise<UserEntity> {
-    const existsUser = await this.userService.getUserByUserAccount(
-      user.userAccount,
-    );
+  async authenticateAccountAndPassword(dto: AuthLoginDto): Promise<UserEntity> {
+    const existsUser = await this.userService.getUserByUserAccount(dto.account);
 
     if (!existsUser) {
       throw new UnauthorizedException('존재하지 않는 사용자입니다.');
     }
 
-    const passOk = await bcrypt.compare(
-      user.userPassword,
-      existsUser.userPassword,
-    );
+    const passOk = await bcrypt.compare(dto.password, existsUser.password);
 
     if (!passOk) {
       throw new UnauthorizedException('아이디 또는 비밀번호를 확인해주세요.');
@@ -79,15 +73,15 @@ export class AuthService {
   }
 
   /**
-   * 1. receive user
-   * 2. store information in payload
-   * 3. return token
+   * @param UserEntity
+   * 1. store information in payload
+   * 2. return token
    */
   signToken(user: UserEntity, isRefreshToken: boolean): string {
     const payload = {
       sub: user.id,
-      name: user.userName,
-      role: user.userRole,
+      name: user.name,
+      role: user.role,
       type: isRefreshToken ? 'refresh' : 'access',
     };
 
@@ -100,13 +94,14 @@ export class AuthService {
   }
 
   /**
-   * 1. receive header and type of token (Bearer or Basic)
-   * 2. extract token from header
-   * 3. validate token
-   * 4. return token
+   * @param headers
+   * @param isBearer
+   * 1. extract token from header
+   * 2. validate token
+   * 3. return token
    */
-  extractToken(header: string, isBearer: boolean) {
-    const split = header.split(' ');
+  extractToken(headers: string, isBearer: boolean) {
+    const split = headers.split(' ');
     const prefix = isBearer ? 'Bearer' : 'Basic';
 
     if (split.length !== 2 || split[0] !== prefix) {
@@ -119,8 +114,8 @@ export class AuthService {
   }
 
   /**
-   * 1. receive token
-   * 2. verify token
+   * @param token
+   * 1. verify token
    */
   verifyToken(token: string) {
     try {
@@ -131,10 +126,10 @@ export class AuthService {
   }
 
   /**
-   * 1. receive basic token
-   * 2. decode basic token
-   * 3. extract user account and password
-   * 4. return decoded user account and password
+   * @param basicToken
+   * 1. decode basic token
+   * 2. extract user account and password
+   * 3. return decoded user account and password
    */
   decodeBasicToken(basicToken: string) {
     const decode = Buffer.from(basicToken, 'base64').toString('utf-8');
@@ -144,15 +139,16 @@ export class AuthService {
       throw new UnauthorizedException('잘못된 토큰입니다.');
     }
 
-    const [userAccount, userPassword] = split;
+    const [account, password] = split;
 
-    return { userAccount, userPassword };
+    return { account, password };
   }
 
   /**
-   * 1. receive refresh token and type of token
-   * 2. request verify token
-   * 3. return new access token and refresh token
+   * @param token
+   * @param isRefreshToken
+   * 1. request verify token
+   * 2. return new access token and refresh token
    */
   reissueToken(token: string, isRefreshToken: boolean) {
     const decoded = this.verifyToken(token);
@@ -167,9 +163,9 @@ export class AuthService {
   }
 
   /**
-   * 1. receive password
-   * 2. encrypt password
-   * 3. return encrypted password
+   * @param password
+   * 1. encrypt password
+   * 2. return encrypted password
    */
   async encodePassword(userPassword: string) {
     const salt = await bcrypt.genSalt();

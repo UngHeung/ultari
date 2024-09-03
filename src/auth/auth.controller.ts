@@ -1,7 +1,6 @@
 import { Body, Controller, Headers, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthSignUpDto } from './dto/auth-signup.dto';
-import { AuthLoginDto } from './dto/auth-login.dto';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { RefreshTokenGuard } from './guard/bearer-token.guard';
 import { BasicTokenGuard } from './guard/basic-token.guard';
@@ -18,9 +17,11 @@ export class AuthController {
   @Post('/login/account')
   @UseGuards(BasicTokenGuard)
   loginUser(
-    @Body() authLoginDto: AuthLoginDto,
+    @Headers('authorization') rawToken: string,
   ): Promise<{ accessToken: string }> {
-    return this.authService.loginUser(authLoginDto);
+    const token = this.authService.extractToken(rawToken, false);
+    const credentials = this.authService.decodeBasicToken(token);
+    return this.authService.loginUser(credentials);
   }
 
   @Post('/reissue/access')
