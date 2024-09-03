@@ -23,8 +23,8 @@ import { PostModule } from './post/post.module';
     }),
     AuthModule,
     UserModule,
-    CommonModule,
     PostModule,
+    CommonModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor },
