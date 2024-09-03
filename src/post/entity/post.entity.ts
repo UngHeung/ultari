@@ -3,19 +3,7 @@ import { BaseModel } from 'src/common/entity/base.entity';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { Column, Entity, ManyToOne } from 'typeorm';
-
-export enum PublicEnum {
-  PUBLIC = 'SCOPE_PUBLIC',
-  PASTURE = 'SCOPE_TEAM',
-  PRIVATE = 'SCOPE_PERSONAL',
-}
-
-export enum ContentTypeEnum {
-  THANKS = 'TYPE_THANKS',
-  PRAYER = 'TYPE_PRAYER',
-  SHARE = 'TYPE_SHARE',
-  FREE = 'TYPE_FREE',
-}
+import { PublicEnum, ContentTypeEnum } from '../enum/post.enum';
 
 @Entity()
 export class PostEntity extends BaseModel {
