@@ -3,22 +3,25 @@ import {
   Controller,
   Get,
   Post,
-  UploadedFile,
+  Req,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostEntity } from './entity/post.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 
 @Controller('post')
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  @Post()
-  createPost(@Body() dto: CreatePostDto) {
-    console.log(dto);
+  @Post('/')
+  @UseGuards(AccessTokenGuard)
+  createPost(@Req() req, @Body() dto: CreatePostDto) {
+    this.createPost(req.user, dto);
   }
 
   @Post()
