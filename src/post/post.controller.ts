@@ -21,7 +21,7 @@ export class PostController {
   @Post('/')
   @UseGuards(AccessTokenGuard)
   createPost(@Req() req, @Body() dto: CreatePostDto) {
-    this.createPost(req.user, dto);
+    this.postService.createPost(req.user, dto);
   }
 
   @Post()
