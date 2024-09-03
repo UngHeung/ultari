@@ -44,5 +44,5 @@ export class PostEntity extends BaseModel {
 
   @Column()
   @IsOptional()
-  comment: string; // will change type to comments entity
+  comments?: string; // will change type to comments entity
 }
