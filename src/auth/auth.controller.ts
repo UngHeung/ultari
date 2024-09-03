@@ -18,9 +18,11 @@ export class AuthController {
   @Post('/login/account')
   @UseGuards(BasicTokenGuard)
   loginUser(
-    @Body() authLoginDto: AuthLoginDto,
+    @Headers('authorization') rawToken: string,
   ): Promise<{ accessToken: string }> {
-    return this.authService.loginUser(authLoginDto);
+    const token = this.authService.extractToken(rawToken, false);
+    const credentials = this.authService.decodeBasicToken(token);
+    return this.authService.loginUser(credentials);
   }
 
   @Post('/reissue/access')
