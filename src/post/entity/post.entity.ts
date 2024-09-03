@@ -10,26 +10,51 @@ export enum PublicEnum {
   PRIVATE = 'SCOPE_PERSONAL',
 }
 
+export enum ContentTypeEnum {
+  THANKS = 'TYPE_THANKS',
+  PRAYER = 'TYPE_PRAYER',
+  SHARE = 'TYPE_SHARE',
+  FREE = 'TYPE_FREE',
+}
+
 @Entity()
 export class PostEntity extends BaseModel {
   @Column({ nullable: false })
   @Length(2, 20, { message: lengthValidationMessage })
-  postTitle: string;
+  title: string;
 
   @Column({ nullable: false })
   @Length(2, 300, { message: lengthValidationMessage })
-  postContent: string;
+  content: string;
 
   @Column()
   @IsOptional()
-  postImages: string; // will change type to post images entity
+  images: string; // will change type to post images entity
 
   @Column({
-    enum: Object.values(PublicEnum),
+    enum: PublicEnum,
     default: PublicEnum.PUBLIC,
   })
-  postVisibility: string;
+  public: PublicEnum;
+
+  @Column({
+    enum: ContentTypeEnum,
+    default: ContentTypeEnum.FREE,
+  })
+  type: ContentTypeEnum;
+
+  @Column()
+  @IsOptional()
+  likeCount: number;
+
+  @Column()
+  @IsOptional()
+  viewCount: number;
 
   @ManyToOne(() => UserEntity, user => user.posts)
-  PostAuthor: UserEntity;
+  author: UserEntity;
+
+  @Column()
+  @IsOptional()
+  comment: any; // will change type to comments entity
 }
