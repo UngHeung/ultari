@@ -4,14 +4,12 @@ import { AuthSignUpDto } from './dto/auth-signup.dto';
 import { AuthLoginDto } from './dto/auth-login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
+import {
+  JWT_ACCESS_EXPIRES_IN,
+  JWT_REFRESH_EXPIRES_IN,
+  JWT_SECRET,
+} from 'src/configs/const/config.const';
 import * as bcrypt from 'bcryptjs';
-import * as config from 'config';
-
-const jwtConfig: {
-  secret: string;
-  accessExpiresIn: number;
-  refreshExpiresIn: number;
-} = config.get('jwt');
 
 @Injectable()
 export class AuthService {
@@ -54,6 +52,17 @@ export class AuthService {
   }
 
   /**
+   * 1. request remove token
+   * 2. return disabled token
+   */
+  logoutUser(): { accessToken: string; refreshToken: string } {
+    return {
+      accessToken: this.removeToken(),
+      refreshToken: this.removeToken(),
+    };
+  }
+
+  /**
    *
    */
   async authenticateAccountAndPassword(dto: AuthLoginDto): Promise<UserEntity> {
@@ -86,10 +95,22 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload, {
-      secret: jwtConfig.secret,
+      secret: process.env[JWT_SECRET],
       expiresIn: isRefreshToken
-        ? jwtConfig.refreshExpiresIn
-        : jwtConfig.accessExpiresIn,
+        ? +process.env[JWT_ACCESS_EXPIRES_IN]
+        : +process.env[JWT_REFRESH_EXPIRES_IN],
+    });
+  }
+
+  /**
+   * 1. remove payload data
+   * 2. set token expires time to 0
+   */
+  removeToken() {
+    const payload = {};
+    return this.jwtService.sign(payload, {
+      secret: process.env[JWT_SECRET],
+      expiresIn: 0,
     });
   }
 
@@ -119,7 +140,7 @@ export class AuthService {
    */
   verifyToken(token: string) {
     try {
-      return this.jwtService.verify(token, { secret: jwtConfig.secret });
+      return this.jwtService.verify(token, { secret: process.env[JWT_SECRET] });
     } catch (error) {
       throw new UnauthorizedException('만료되었거나 잘못된 토큰입니다.');
     }

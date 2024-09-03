@@ -2,8 +2,11 @@ import { Body, Controller, Headers, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthSignUpDto } from './dto/auth-signup.dto';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { RefreshTokenGuard } from './guard/bearer-token.guard';
 import { BasicTokenGuard } from './guard/basic-token.guard';
+import {
+  AccessTokenGuard,
+  RefreshTokenGuard,
+} from './guard/bearer-token.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -18,7 +21,7 @@ export class AuthController {
   @UseGuards(BasicTokenGuard)
   loginUser(
     @Headers('authorization') rawToken: string,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const token = this.authService.extractToken(rawToken, false);
     const credentials = this.authService.decodeBasicToken(token);
     return this.authService.loginUser(credentials);
@@ -44,5 +47,11 @@ export class AuthController {
     return {
       refreshToken: newToken,
     };
+  }
+
+  @Post('/logout')
+  @UseGuards(AccessTokenGuard)
+  logoutUser(): { accessToken: string; refreshToken: string } {
+    return this.authService.logoutUser();
   }
 }
