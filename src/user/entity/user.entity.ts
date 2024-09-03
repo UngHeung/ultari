@@ -56,6 +56,6 @@ export class UserEntity extends BaseModel {
   })
   userRole: string;
 
-  @OneToMany(() => PostEntity, post => post.PostAuthor)
+  @OneToMany(() => PostEntity, post => post.author)
   posts: PostEntity[];
 }
