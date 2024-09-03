@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  Patch,
   Post,
   Req,
   UploadedFiles,
@@ -13,6 +15,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { PostEntity } from './entity/post.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 @Controller('post')
 export class PostController {
@@ -33,5 +36,15 @@ export class PostController {
   @UseGuards(AccessTokenGuard)
   getPosts(): Promise<PostEntity[]> {
     return this.postService.getPosts();
+  }
+
+  @Patch('/:id')
+  @UseGuards(AccessTokenGuard)
+  updatePost(
+    @Req() req,
+    @Param('id') id: number,
+    @Body() dto: UpdatePostDto,
+  ): Promise<PostEntity> {
+    return this.postService.updatePost(req.user, +id, dto);
   }
 }
