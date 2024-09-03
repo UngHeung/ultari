@@ -21,14 +21,16 @@ export class PostController {
   @Post('/')
   @UseGuards(AccessTokenGuard)
   createPost(@Req() req, @Body() dto: CreatePostDto) {
-    this.postService.createPost(req.user, dto);
+    return this.postService.createPost(req.user, dto);
   }
 
   @Post()
+  @UseGuards(AccessTokenGuard)
   @UseInterceptors(FilesInterceptor('images'))
   uploadImage(@UploadedFiles() files: Express.Multer.File) {}
 
   @Get()
+  @UseGuards(AccessTokenGuard)
   getPosts(): Promise<PostEntity[]> {
     return this.postService.getPosts();
   }
