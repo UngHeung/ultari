@@ -36,7 +36,7 @@ export class PostEntity extends BaseModel {
   @IsOptional()
   viewCount: number;
 
-  @ManyToOne(() => UserEntity, user => user.posts)
+  @ManyToOne(() => UserEntity, user => user.posts, { nullable: false })
   author: UserEntity;
 
   @OneToMany(() => ImageEntity, image => image.post)
