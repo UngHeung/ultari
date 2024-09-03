@@ -23,7 +23,7 @@ export class PostEntity extends BaseModel {
     enum: PublicEnum,
     default: PublicEnum.PUBLIC,
   })
-  public: PublicEnum;
+  visibility: PublicEnum;
 
   @Column({
     enum: ContentTypeEnum,

@@ -4,6 +4,6 @@ import { PostEntity } from '../entity/post.entity';
 export class CreatePostDto extends PickType(PostEntity, [
   'title',
   'content',
-  'public',
+  'visibility',
   'type',
 ]) {}
