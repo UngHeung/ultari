@@ -26,31 +26,22 @@ export class UserService {
    * 2. check already registered account, email, phone
    * 3. save new user in user repository
    */
-  async createUser(authSignUpDto: AuthSignUpDto) {
-    const { userAccount, userEmail, userPhone }: AuthSignUpDto = authSignUpDto;
+  async createUser(dto: AuthSignUpDto) {
+    const { account, phone, email }: AuthSignUpDto = dto;
 
-    if (
-      userAccount &&
-      (await this.userRepository.exists({ where: { userAccount } }))
-    ) {
+    if (account && (await this.userRepository.exists({ where: { account } }))) {
       throw new ConflictException('이미 등록된 계정입니다.');
     }
 
-    if (
-      userPhone &&
-      (await this.userRepository.exists({ where: { userPhone } }))
-    ) {
+    if (phone && (await this.userRepository.exists({ where: { phone } }))) {
       throw new ConflictException('이미 등록된 연락처입니다.');
     }
 
-    if (
-      userEmail &&
-      (await this.userRepository.exists({ where: { userEmail } }))
-    ) {
+    if (email && (await this.userRepository.exists({ where: { email } }))) {
       throw new ConflictException('이미 등록된 이메일입니다.');
     }
 
-    const newUser = this.userRepository.create(authSignUpDto);
+    const newUser = this.userRepository.create(dto);
 
     return await this.userRepository.save(newUser);
   }
@@ -82,8 +73,8 @@ export class UserService {
    * 2. get user by user account from user repostitory
    * 3. return user
    */
-  async getUserByUserAccount(userAccount: string): Promise<UserEntity> {
-    const user = await this.userRepository.findOne({ where: { userAccount } });
+  async getUserByUserAccount(account: string): Promise<UserEntity> {
+    const user = await this.userRepository.findOne({ where: { account } });
     return user;
   }
 
@@ -102,40 +93,40 @@ export class UserService {
     userProfile: string,
   ): Promise<UserEntity> {
     const user = await this.getUserById(id);
-    const { userPassword, userPhone, userEmail }: UpdateUserDto = updateUserDto;
+    const { password, phone, email }: UpdateUserDto = updateUserDto;
 
-    if (!(await bcrypt.compare(userPassword, user.userPassword))) {
+    if (!(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('비밀번호를 확인해주세요.');
     }
 
-    if (userPhone && user.userPhone !== userPhone) {
+    if (phone && user.phone !== phone) {
       const userPhoneExists = await this.userRepository.findOne({
-        where: { userPhone },
+        where: { phone },
       });
 
       if (userPhoneExists) {
         throw new ConflictException('이미 등록된 연락처입니다.');
       }
 
-      user.userPhone = userPhone;
+      user.phone = phone;
     }
 
-    if (userEmail && user.userEmail !== userEmail) {
+    if (email && user.email !== email) {
       const userExists = await this.userRepository.findOne({
-        where: { userEmail },
+        where: { email },
       });
 
       if (userExists) {
         throw new ConflictException('이미 등록된 이메일 입니다.');
       }
 
-      user.userEmail = userEmail;
+      user.email = email;
     }
 
     if (userProfile) {
-      user.userProfilePath &&
-        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.userProfilePath);
-      user.userProfilePath = userProfile;
+      user.profilePath &&
+        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profilePath);
+      user.profilePath = userProfile;
     }
 
     this.userRepository.save(user);

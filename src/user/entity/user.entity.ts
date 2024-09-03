@@ -21,40 +21,40 @@ export class UserEntity extends BaseModel {
   @Column({ unique: true })
   @IsString({ message: stringValidationMessage })
   @Length(6, 15, { message: lengthValidationMessage })
-  userAccount: string;
+  account: string;
 
   @Column()
   @IsString({ message: stringValidationMessage })
   @Length(8, 20, { message: lengthValidationMessage })
   @Exclude({ toPlainOnly: true })
-  userPassword: string;
+  password: string;
 
   @Column()
   @IsString({ message: stringValidationMessage })
   @Length(2, 10, { message: lengthValidationMessage })
-  userName: string;
+  name: string;
 
   @Column({ unique: true })
   @IsString({ message: stringValidationMessage })
   @Length(12, 13, { message: lengthValidationMessage })
-  userPhone: string;
+  phone: string;
 
   @Column({ unique: true })
   @IsString({ message: stringValidationMessage })
   @IsEmail({}, { message: emailValidationMessage })
-  userEmail: string;
+  email: string;
 
   @Column({
     nullable: true,
   })
   @Transform(({ value }) => value && `${join(PROFILE_IMAGE_PATH, value)}`)
-  userProfilePath?: string;
+  profilePath?: string;
 
   @Column({
     enum: Object.values(RoleEnum),
     default: RoleEnum.USER,
   })
-  userRole: string;
+  role: string;
 
   @OneToMany(() => PostEntity, post => post.author)
   posts: PostEntity[];
