@@ -12,4 +12,8 @@ export class CreatePostDto extends PickType(PostEntity, [
   @IsString({ each: true })
   @IsOptional()
   images?: ImageEntity[] = [];
+
+  @IsString()
+  @IsOptional()
+  comments?: string = '';
 }

@@ -36,7 +36,7 @@ export class PostEntity extends BaseModel {
   @IsOptional()
   viewCount: number;
 
-  @ManyToOne(() => UserEntity, user => user.posts)
+  @ManyToOne(() => UserEntity, user => user.posts, { nullable: false })
   author: UserEntity;
 
   @OneToMany(() => ImageEntity, image => image.post)
@@ -44,5 +44,5 @@ export class PostEntity extends BaseModel {
 
   @Column()
   @IsOptional()
-  comment: string; // will change type to comments entity
+  comments?: string; // will change type to comments entity
 }
