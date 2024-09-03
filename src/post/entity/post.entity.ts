@@ -2,8 +2,9 @@ import { IsOptional, Length } from 'class-validator';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { PublicEnum, ContentTypeEnum } from '../enum/post.enum';
+import { ImageEntity } from 'src/common/entity/image.entity';
 
 @Entity()
 export class PostEntity extends BaseModel {
@@ -15,34 +16,33 @@ export class PostEntity extends BaseModel {
   @Length(2, 300, { message: lengthValidationMessage })
   content: string;
 
-  @Column()
-  @IsOptional()
-  images: string; // will change type to post images entity
-
   @Column({
     enum: PublicEnum,
     default: PublicEnum.PUBLIC,
   })
-  visibility: PublicEnum;
+  visibility?: PublicEnum;
 
   @Column({
     enum: ContentTypeEnum,
     default: ContentTypeEnum.FREE,
   })
-  type: ContentTypeEnum;
+  type?: ContentTypeEnum;
 
-  @Column()
+  @Column({ default: 0 })
   @IsOptional()
   likeCount: number;
 
-  @Column()
+  @Column({ default: 0 })
   @IsOptional()
   viewCount: number;
 
   @ManyToOne(() => UserEntity, user => user.posts)
   author: UserEntity;
 
+  @OneToMany(() => ImageEntity, image => image.post)
+  images?: ImageEntity[];
+
   @Column()
   @IsOptional()
-  comment: any; // will change type to comments entity
+  comment: string; // will change type to comments entity
 }
