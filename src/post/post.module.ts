@@ -9,6 +9,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { multerModuleOptions } from 'src/common/multer/file-upload.multer';
 import { PUBLIC_FOLDER_PATH } from 'src/common/const/path.const';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PUBLIC_FOLDER_PATH } from 'src/common/const/path.const';
       serveRoot: '/public',
     }),
     TypeOrmModule.forFeature([PostEntity, UserEntity]),
+    AuthModule,
     UserModule,
   ],
   exports: [PostService],
