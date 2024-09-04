@@ -30,7 +30,7 @@ export class BearerTokenGuard implements CanActivate {
 
     request.user = user;
     request.token = token;
-    request.tokenType = result.type;
+    request.tokenType = result.payload.type;
 
     return true;
   }

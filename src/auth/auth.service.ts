@@ -140,7 +140,10 @@ export class AuthService {
    */
   verifyToken(token: string) {
     try {
-      return this.jwtService.verify(token, { secret: process.env[JWT_SECRET] });
+      return this.jwtService.verify(token, {
+        secret: process.env[JWT_SECRET],
+        complete: true,
+      });
     } catch (error) {
       throw new UnauthorizedException('만료되었거나 잘못된 토큰입니다.');
     }
@@ -174,13 +177,18 @@ export class AuthService {
   reissueToken(token: string, isRefreshToken: boolean) {
     const decoded = this.verifyToken(token);
 
-    if (decoded.type !== 'refresh') {
+    const payload = {
+      ...decoded.payload,
+      id: decoded.payload.sub,
+    };
+
+    if (payload.type !== 'refresh') {
       throw new UnauthorizedException(
         'Refresh 토큰으로만 토큰 재발급이 가능합니다.',
       );
     }
 
-    return this.signToken({ ...decoded }, isRefreshToken);
+    return this.signToken(payload, isRefreshToken);
   }
 
   /**
