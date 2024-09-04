@@ -68,7 +68,7 @@ export class PostService {
   /**
    * @param id
    * @param UpdatePostDto
-   * request update post with received dto data
+   * update post with received dto data
    * return new post
    */
   async updatePost(
@@ -99,10 +99,16 @@ export class PostService {
   }
 
   /**
-   * @param dto
-   * request generate paginate
+   * @param PaginatePostDto
+   * generate paginate
    */
-  async paginatePosts(dto: PaginatePostDto) {
+  async paginatePosts(dto: PaginatePostDto): Promise<{
+    data: PostEntity[];
+    total?: number;
+    cursor?: { after: number };
+    count?: number;
+    next?: string;
+  }> {
     return this.commonService.paginate(
       dto,
       this.postRepository,
