@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostEntity } from './entity/post.entity';
@@ -11,12 +7,14 @@ import { UserEntity } from 'src/user/entity/user.entity';
 import { ImageEntity } from 'src/common/entity/image.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
+import { CommonService } from 'src/common/common.service';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectRepository(PostEntity)
     private readonly postRepository: Repository<PostEntity>,
+    private readonly commonService: CommonService,
   ) {}
 
   /**
