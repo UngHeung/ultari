@@ -18,6 +18,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginatePostDto } from './dto/paginate-post.dto';
+import { ImageTypeEnum } from 'src/common/enum/image.enum';
 
 @Controller('post')
 export class PostController {
@@ -25,8 +26,19 @@ export class PostController {
 
   @Post('/')
   @UseGuards(AccessTokenGuard)
-  createPost(@Req() req, @Body() dto: CreatePostDto) {
-    return this.postService.createPost(req.user, dto);
+  async createPost(@Req() req, @Body() dto: CreatePostDto) {
+    const post = await this.postService.createPost(req.user, dto);
+
+    for (let i = 0; i < dto.images.length; i++) {
+      await this.postService.createPostImage({
+        post,
+        order: i,
+        path: dto.images[i],
+        type: ImageTypeEnum.POST_IMAGE,
+      });
+    }
+
+    return await this.postService.getPostById(post.id);
   }
 
   @Post()
