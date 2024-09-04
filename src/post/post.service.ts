@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -98,8 +99,21 @@ export class PostService {
   /**
    * @param id
    * delete post by post id
+   * @todo
+   * delete images files in folder
    */
-  async deletePost(id: number): Promise<number> {
+  async deletePost(user: UserEntity, id: number): Promise<number> {
+    const post = await this.postRepository.find({
+      where: {
+        id: id,
+        author: {
+          id: user.id,
+        },
+      },
+    });
+
+    if (!post) throw new BadRequestException('본인의 게시물이 아닙니다.');
+
     const deleteResult = await this.postRepository.delete(id);
 
     if (!deleteResult.affected) {

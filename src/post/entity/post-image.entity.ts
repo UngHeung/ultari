@@ -8,7 +8,7 @@ import { join } from 'path';
 
 @Entity()
 export class PostImageEntity extends ImageModel {
-  @ManyToOne(() => PostEntity, post => post.images)
+  @ManyToOne(() => PostEntity, post => post.images, { onDelete: 'CASCADE' })
   post: PostEntity;
 
   @Column()
