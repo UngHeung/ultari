@@ -23,9 +23,12 @@ export class CommonService {
   ) {}
 
   /**
-   * 1. receive base paginate dto and additional find options, repository from target entity, next page path
-   * 2. if dto has page, return page based paginate
-   * 3. if dto has not page, return cursor based paginate
+   * @param BasePaginateDto
+   * @param repository
+   * @param overrideFindOptions
+   * @param path
+   * 1. if dto have a page, return page based paginate
+   * 2. if dto have not a page, return cursor based paginate
    */
   paginate<T extends BaseModel>(
     dto: BasePaginateDto,
@@ -41,7 +44,11 @@ export class CommonService {
   }
 
   /**
-   *
+   * @param BasePaginateDto
+   * @param repository
+   * @param overrideFindOptions
+   * 1. find post via find options
+   * 2. return posts and total post count
    */
   private async pagePaginate<T extends BaseModel>(
     dto: BasePaginateDto,
@@ -61,7 +68,12 @@ export class CommonService {
   }
 
   /**
-   *
+   * @param BasePaginateDto
+   * @param repository
+   * @param overrideFindOptions
+   * @param path
+   * 1. find post via find options
+   * 2. return posts, cursor, take count, skip count
    */
   private async cursorPaginate<T extends BaseModel>(
     dto: BasePaginateDto,
@@ -113,7 +125,9 @@ export class CommonService {
   }
 
   /**
-   *
+   * @param BasePaginateDto
+   * 1. compose find options via received options
+   * 2. return composed options
    */
   private composeFindOptions<T extends BaseModel>(
     dto: BasePaginateDto,
@@ -144,7 +158,10 @@ export class CommonService {
   }
 
   /**
-   *
+   * @param key
+   * @param value
+   * 1. validate filter
+   * 2. filter mapping via operator
    */
   private parseFilter<T extends BaseModel>(
     key: string,
@@ -173,9 +190,10 @@ export class CommonService {
   }
 
   /**
-   * 1. receive current file name with extention
-   * 2. find current profile by received file path and file name
-   * 3. delete current profile
+   * @param path
+   * @param fileName
+   * 1. find current profile by received file path and file name
+   * 2. delete current profile
    */
   async removeFile(path: string, fileName: string) {
     const removeFilePath = join(path, fileName);
@@ -186,8 +204,10 @@ export class CommonService {
   }
 
   /**
-   * 1. receive current folder and new folder name and file name to move
-   * 2. move file to new folder from current folder
+   * @param currentPath
+   * @param newPath
+   * @param fileName
+   * 1. move file to new folder from current folder
    */
   async renameFile(currentPath: string, newPath: string, fileName: string) {
     const renameFilePath = join(currentPath, fileName);
