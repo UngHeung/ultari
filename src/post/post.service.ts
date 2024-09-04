@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostEntity } from './entity/post.entity';
@@ -10,12 +6,16 @@ import { Repository } from 'typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { ImageEntity } from 'src/common/entity/image.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
+import { CommonService } from 'src/common/common.service';
+import { PaginatePostDto } from './dto/paginate-post.dto';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectRepository(PostEntity)
     private readonly postRepository: Repository<PostEntity>,
+    private readonly commonService: CommonService,
   ) {}
 
   /**
@@ -29,8 +29,8 @@ export class PostService {
     dto: CreatePostDto,
   ): Promise<PostEntity> {
     const post = this.postRepository.create({
-      author,
       ...dto,
+      author,
       images: [] as ImageEntity[],
     });
 
@@ -45,20 +45,21 @@ export class PostService {
    */
   async getPosts(): Promise<PostEntity[]> {
     const posts = await this.postRepository.find({
-      relations: { author: true },
+      ...POST_DEFAULT_FIND_OPTIONS,
     });
 
     return posts;
   }
 
   /**
+   * @param id
    * 1. find post by id
    * 2. return post
    */
   async getPost(id: number): Promise<PostEntity> {
     const post = await this.postRepository.findOne({
+      ...POST_DEFAULT_FIND_OPTIONS,
       where: { id },
-      relations: { author: true },
     });
 
     return post;
@@ -67,6 +68,8 @@ export class PostService {
   /**
    * @param id
    * @param UpdatePostDto
+   * update post with received dto data
+   * return new post
    */
   async updatePost(
     user: UserEntity,
@@ -93,5 +96,24 @@ export class PostService {
     const newPost = this.postRepository.save(post);
 
     return newPost;
+  }
+
+  /**
+   * @param PaginatePostDto
+   * generate paginate
+   */
+  async paginatePosts(dto: PaginatePostDto): Promise<{
+    data: PostEntity[];
+    total?: number;
+    cursor?: { after: number };
+    count?: number;
+    next?: string;
+  }> {
+    return this.commonService.paginate(
+      dto,
+      this.postRepository,
+      { ...POST_DEFAULT_FIND_OPTIONS },
+      'post',
+    );
   }
 }

@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFiles,
   UseGuards,
@@ -16,6 +17,7 @@ import { PostEntity } from './entity/post.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PaginatePostDto } from './dto/paginate-post.dto';
 
 @Controller('post')
 export class PostController {
@@ -34,8 +36,14 @@ export class PostController {
 
   @Get()
   @UseGuards(AccessTokenGuard)
-  getPosts(): Promise<PostEntity[]> {
-    return this.postService.getPosts();
+  getPosts(@Query() query: PaginatePostDto): Promise<{
+    data: PostEntity[];
+    total?: number;
+    cursor?: { after: number };
+    count?: number;
+    next?: string;
+  }> {
+    return this.postService.paginatePosts(query);
   }
 
   @Patch('/:id')
