@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { ImageEntity } from 'src/common/entity/image.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
 
 @Injectable()
 export class PostService {
@@ -45,7 +46,7 @@ export class PostService {
    */
   async getPosts(): Promise<PostEntity[]> {
     const posts = await this.postRepository.find({
-      relations: { author: true },
+      ...POST_DEFAULT_FIND_OPTIONS,
     });
 
     return posts;
@@ -57,8 +58,8 @@ export class PostService {
    */
   async getPost(id: number): Promise<PostEntity> {
     const post = await this.postRepository.findOne({
+      ...POST_DEFAULT_FIND_OPTIONS,
       where: { id },
-      relations: { author: true },
     });
 
     return post;
