@@ -10,7 +10,7 @@ import { UserEntity } from 'src/user/entity/user.entity';
   imports: [
     JwtModule.register({}),
     TypeOrmModule.forFeature([UserEntity]),
-    forwardRef(() => UserModule),
+    UserModule,
   ],
   exports: [AuthService],
   controllers: [AuthController],

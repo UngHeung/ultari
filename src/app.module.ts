@@ -22,9 +22,9 @@ import { PostModule } from './post/post.module';
       serveRoot: '/public',
     }),
     AuthModule,
+    CommonModule,
     UserModule,
     PostModule,
-    CommonModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor },
