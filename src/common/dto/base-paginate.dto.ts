@@ -14,11 +14,11 @@ export class BasePaginateDto {
   @IsOptional()
   where__id__less_than?: number;
 
-  @IsIn(['ASC', 'DESC'], { message: '' })
+  @IsIn(['ASC', 'DESC'], { message: '정렬은 ASC 또는 DESC로 입력해주세요.' })
   @IsOptional()
   order__createAt?: 'ASC' | 'DESC' = 'ASC';
 
   @IsNumber({}, { message: numberValidationMessage })
   @IsOptional()
-  take: number = 20;
+  take: number = 10;
 }

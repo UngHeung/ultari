@@ -13,7 +13,6 @@ import { BaseModel } from './entity/base.entity';
 import { BasePaginateDto } from './dto/base-paginate.dto';
 import { FILTER_MAPPER } from './const/filter-mapper.const';
 import { ConfigService } from '@nestjs/config';
-import { DB_HOST } from 'src/configs/const/config.const';
 
 @Injectable()
 export class CommonService {
@@ -139,6 +138,8 @@ export class CommonService {
     return {
       where,
       order,
+      take: dto.take,
+      skip: dto.page ? dto.take * (dto.page - 1) : null,
     };
   }
 
