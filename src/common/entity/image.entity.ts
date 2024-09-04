@@ -1,9 +1,8 @@
-import { Column, Entity } from 'typeorm';
+import { Column } from 'typeorm';
 import { BaseModel } from './base.entity';
 import { ImageTypeEnum } from '../enum/image.enum';
 import { IsNumber, IsString } from 'class-validator';
 
-@Entity()
 export class ImageModel extends BaseModel {
   @Column({ default: 0 })
   @IsNumber()
