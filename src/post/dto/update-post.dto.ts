@@ -1,8 +1,8 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { PostEntity } from '../entity/post.entity';
 import { IsOptional, IsString } from 'class-validator';
-import { ImageEntity } from 'src/common/entity/image.entity';
 import { ContentTypeEnum, PublicEnum } from '../enum/post.enum';
+import { PostImageEntity } from '../entity/post-image.entity';
 
 export class UpdatePostDto extends PartialType(PostEntity) {
   @IsString()
@@ -23,5 +23,5 @@ export class UpdatePostDto extends PartialType(PostEntity) {
 
   @IsString({ each: true })
   @IsOptional()
-  images?: ImageEntity[];
+  images?: PostImageEntity[];
 }

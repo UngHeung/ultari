@@ -4,7 +4,7 @@ import { lengthValidationMessage } from 'src/common/validator/message/length-val
 import { UserEntity } from 'src/user/entity/user.entity';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { PublicEnum, ContentTypeEnum } from '../enum/post.enum';
-import { ImageEntity } from 'src/common/entity/image.entity';
+import { PostImageEntity } from './post-image.entity';
 
 @Entity()
 export class PostEntity extends BaseModel {
@@ -39,8 +39,8 @@ export class PostEntity extends BaseModel {
   @ManyToOne(() => UserEntity, user => user.posts, { nullable: false })
   author: UserEntity;
 
-  @OneToMany(() => ImageEntity, image => image.post)
-  images?: ImageEntity[];
+  @OneToMany(() => PostImageEntity, image => image.post)
+  images?: PostImageEntity[];
 
   @Column()
   @IsOptional()
