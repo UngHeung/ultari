@@ -43,19 +43,6 @@ export class PostService {
   }
 
   /**
-   * [for development]
-   * 1. find all posts
-   * 2. return posts
-   */
-  async getPosts(): Promise<PostEntity[]> {
-    const posts = await this.postRepository.find({
-      ...POST_DEFAULT_FIND_OPTIONS,
-    });
-
-    return posts;
-  }
-
-  /**
    * @param id
    * 1. find post by id
    * 2. return post
