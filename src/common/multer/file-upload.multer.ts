@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { MulterModuleOptions } from '@nestjs/platform-express';
-import { PROFILE_IMAGE_PATH } from '../const/path.const';
+import { TEMP_FOLDER_PATH } from '../const/path.const';
 import { extname } from 'path';
 import { v4 as uuid } from 'uuid';
 import * as multer from 'multer';
@@ -23,7 +23,7 @@ export const multerModuleOptions: MulterModuleOptions = {
   },
   storage: multer.diskStorage({
     destination: (request, response, callback) => {
-      callback(null, PROFILE_IMAGE_PATH);
+      callback(null, TEMP_FOLDER_PATH);
     },
     filename: (request, file, callback) => {
       callback(null, `${uuid()}${extname(file.originalname)}`);
