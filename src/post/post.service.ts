@@ -5,19 +5,19 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreatePostDto } from './dto/create-post.dto';
-import { PostEntity } from './entity/post.entity';
 import { Repository } from 'typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { UpdatePostDto } from './dto/update-post.dto';
-import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
-import { CommonService } from 'src/common/common.service';
-import { PaginatePostDto } from './dto/paginate-post.dto';
+import { PostEntity } from './entity/post.entity';
 import { PostImageEntity } from './entity/post-image.entity';
+import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
+import { PaginatePostDto } from './dto/paginate-post.dto';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
+import { CommonService } from 'src/common/common.service';
 import { basename, join } from 'path';
-import { POST_IMAGE_PATH, TEMP_FOLDER_PATH } from 'src/common/const/path.const';
 import { promises } from 'fs';
+import { POST_IMAGE_PATH, TEMP_FOLDER_PATH } from 'src/common/const/path.const';
+import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
 
 @Injectable()
 export class PostService {
@@ -99,18 +99,19 @@ export class PostService {
   /**
    * @param id
    * delete post by post id
-   * @todo
    * delete images files in folder
    */
   async deletePost(user: UserEntity, id: number): Promise<number> {
-    const post = await this.postRepository.find({
-      where: {
-        id: id,
-        author: {
-          id: user.id,
+    const post: PostEntity & { images?: PostImageEntity[] } =
+      await this.postRepository.findOne({
+        where: {
+          id: id,
+          author: {
+            id: user.id,
+          },
         },
-      },
-    });
+        relations: { images: true },
+      });
 
     if (!post) throw new BadRequestException('본인의 게시물이 아닙니다.');
 
@@ -120,9 +121,16 @@ export class PostService {
       throw new NotFoundException(`삭제할 게시물이 없습니다. id : ${id}`);
     }
 
+    for (let i = 0; i < post.images.length; i++) {
+      this.commonService.removeFile(POST_IMAGE_PATH, post.images[i].path);
+    }
+
     return id;
   }
 
+  /**
+   * @param CreatePostDto
+   */
   createPostImage(dto: CreatePostImageDto) {
     const tempFilePath = join(TEMP_FOLDER_PATH, dto.path);
     const fileName = basename(tempFilePath);
