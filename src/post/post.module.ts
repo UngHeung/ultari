@@ -11,6 +11,7 @@ import { multerModuleOptions } from 'src/common/multer/file-upload.multer';
 import { PUBLIC_FOLDER_PATH } from 'src/common/const/path.const';
 import { AuthModule } from 'src/auth/auth.module';
 import { CommonModule } from 'src/common/common.module';
+import { PostImageEntity } from './entity/post-image.entity';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { CommonModule } from 'src/common/common.module';
       rootPath: PUBLIC_FOLDER_PATH,
       serveRoot: '/public',
     }),
-    TypeOrmModule.forFeature([PostEntity, UserEntity]),
+    TypeOrmModule.forFeature([PostEntity, UserEntity, PostImageEntity]),
     AuthModule,
     UserModule,
     CommonModule,
