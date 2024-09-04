@@ -41,8 +41,8 @@ export class AuthController {
   @Post('/reissue/refresh')
   @UseGuards(RefreshTokenGuard)
   reissueRefreshToken(@Headers('authorization') rawToken: string) {
-    const token = this.authService.extractToken(rawToken, false);
-    const newToken = this.authService.reissueToken(token, false);
+    const token = this.authService.extractToken(rawToken, true);
+    const newToken = this.authService.reissueToken(token, true);
 
     return {
       refreshToken: newToken,
