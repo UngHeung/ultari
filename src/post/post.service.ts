@@ -1,14 +1,18 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostEntity } from './entity/post.entity';
 import { Repository } from 'typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { ImageEntity } from 'src/common/entity/image.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
 import { CommonService } from 'src/common/common.service';
 import { PaginatePostDto } from './dto/paginate-post.dto';
+import { PostImageEntity } from './entity/post-image.entity';
 
 @Injectable()
 export class PostService {
@@ -31,24 +35,11 @@ export class PostService {
     const post = this.postRepository.create({
       ...dto,
       author,
-      images: [] as ImageEntity[],
+      images: [] as PostImageEntity[],
     });
 
     const newPost = await this.postRepository.save(post);
     return newPost;
-  }
-
-  /**
-   * [for development]
-   * 1. find all posts
-   * 2. return posts
-   */
-  async getPosts(): Promise<PostEntity[]> {
-    const posts = await this.postRepository.find({
-      ...POST_DEFAULT_FIND_OPTIONS,
-    });
-
-    return posts;
   }
 
   /**
@@ -96,6 +87,20 @@ export class PostService {
     const newPost = this.postRepository.save(post);
 
     return newPost;
+  }
+
+  /**
+   * @param id
+   * delete post by post id
+   */
+  async deletePost(id: number): Promise<number> {
+    const deleteResult = await this.postRepository.delete(id);
+
+    if (!deleteResult.affected) {
+      throw new NotFoundException(`삭제할 게시물이 없습니다. id : ${id}`);
+    }
+
+    return id;
   }
 
   /**
