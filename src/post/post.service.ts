@@ -13,12 +13,18 @@ import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.con
 import { CommonService } from 'src/common/common.service';
 import { PaginatePostDto } from './dto/paginate-post.dto';
 import { PostImageEntity } from './entity/post-image.entity';
+import { CreatePostImageDto } from './dto/create-post-image.dto';
+import { basename, join } from 'path';
+import { POST_IMAGE_PATH, TEMP_FOLDER_PATH } from 'src/common/const/path.const';
+import { promises } from 'fs';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectRepository(PostEntity)
     private readonly postRepository: Repository<PostEntity>,
+    @InjectRepository(PostImageEntity)
+    private readonly postImageRepository: Repository<PostImageEntity>,
     private readonly commonService: CommonService,
   ) {}
 
@@ -47,7 +53,7 @@ export class PostService {
    * 1. find post by id
    * 2. return post
    */
-  async getPost(id: number): Promise<PostEntity> {
+  async getPostById(id: number): Promise<PostEntity> {
     const post = await this.postRepository.findOne({
       ...POST_DEFAULT_FIND_OPTIONS,
       where: { id },
@@ -101,6 +107,17 @@ export class PostService {
     }
 
     return id;
+  }
+
+  createPostImage(dto: CreatePostImageDto) {
+    const tempFilePath = join(TEMP_FOLDER_PATH, dto.path);
+    const fileName = basename(tempFilePath);
+    const newPath = join(POST_IMAGE_PATH, fileName);
+    const result = this.postImageRepository.save(dto);
+
+    promises.rename(tempFilePath, newPath);
+
+    return result;
   }
 
   /**
