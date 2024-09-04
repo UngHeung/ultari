@@ -8,11 +8,11 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { PostEntity } from './entity/post.entity';
 import { Repository } from 'typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { ImageEntity } from 'src/common/entity/image.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
 import { CommonService } from 'src/common/common.service';
 import { PaginatePostDto } from './dto/paginate-post.dto';
+import { PostImageEntity } from './entity/post-image.entity';
 
 @Injectable()
 export class PostService {
@@ -35,7 +35,7 @@ export class PostService {
     const post = this.postRepository.create({
       ...dto,
       author,
-      images: [] as ImageEntity[],
+      images: [] as PostImageEntity[],
     });
 
     const newPost = await this.postRepository.save(post);
