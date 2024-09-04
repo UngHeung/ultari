@@ -8,6 +8,7 @@ import { ImageEntity } from 'src/common/entity/image.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
 import { CommonService } from 'src/common/common.service';
+import { PaginatePostDto } from './dto/paginate-post.dto';
 
 @Injectable()
 export class PostService {
@@ -28,8 +29,8 @@ export class PostService {
     dto: CreatePostDto,
   ): Promise<PostEntity> {
     const post = this.postRepository.create({
-      author,
       ...dto,
+      author,
       images: [] as ImageEntity[],
     });
 
@@ -51,6 +52,7 @@ export class PostService {
   }
 
   /**
+   * @param id
    * 1. find post by id
    * 2. return post
    */
@@ -66,6 +68,8 @@ export class PostService {
   /**
    * @param id
    * @param UpdatePostDto
+   * request update post with received dto data
+   * return new post
    */
   async updatePost(
     user: UserEntity,
@@ -92,5 +96,18 @@ export class PostService {
     const newPost = this.postRepository.save(post);
 
     return newPost;
+  }
+
+  /**
+   * @param dto
+   * request generate paginate
+   */
+  async paginatePosts(dto: PaginatePostDto) {
+    return this.commonService.paginate(
+      dto,
+      this.postRepository,
+      { ...POST_DEFAULT_FIND_OPTIONS },
+      'post',
+    );
   }
 }
