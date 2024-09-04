@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostEntity } from './entity/post.entity';
@@ -96,6 +100,20 @@ export class PostService {
     const newPost = this.postRepository.save(post);
 
     return newPost;
+  }
+
+  /**
+   * @param id
+   * delete post by post id
+   */
+  async deletePost(id: number): Promise<number> {
+    const deleteResult = await this.postRepository.delete(id);
+
+    if (!deleteResult.affected) {
+      throw new NotFoundException(`삭제할 게시물이 없습니다. id : ${id}`);
+    }
+
+    return id;
   }
 
   /**
