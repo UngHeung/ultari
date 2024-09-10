@@ -50,7 +50,6 @@ export class AuthController {
   }
 
   @Post('/logout')
-  @UseGuards(AccessTokenGuard)
   logoutUser(): { accessToken: string; refreshToken: string } {
     return this.authService.logoutUser();
   }
