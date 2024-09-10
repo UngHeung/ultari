@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -22,6 +23,12 @@ export class UserController {
   @UseGuards(AccessTokenGuard)
   getUsers(): Promise<UserEntity[]> {
     return this.userService.getUsers();
+  }
+
+  @Get('/myinfo')
+  @UseGuards(AccessTokenGuard)
+  getMyInfo(@Req() req) {
+    return this.userService.getUserById(req.user.id);
   }
 
   @Get('/:id')
