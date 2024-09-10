@@ -69,7 +69,7 @@ export class AuthService {
     const existsUser = await this.userService.getUserByUserAccount(dto.account);
 
     if (!existsUser) {
-      throw new UnauthorizedException('존재하지 않는 사용자입니다.');
+      throw new UnauthorizedException('아이디 또는 비밀번호를 확인해주세요.');
     }
 
     const passOk = await bcrypt.compare(dto.password, existsUser.password);
@@ -126,7 +126,7 @@ export class AuthService {
     const prefix = isBearer ? 'Bearer' : 'Basic';
 
     if (split.length !== 2 || split[0] !== prefix) {
-      throw new UnauthorizedException('잘못된 토큰입니다.');
+      throw new UnauthorizedException('만료되었거나 잘못된 토큰입니다.');
     }
 
     const token = split[1];
