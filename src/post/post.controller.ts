@@ -48,7 +48,6 @@ export class PostController {
   uploadImage(@UploadedFiles() files: Express.Multer.File) {}
 
   @Get()
-  @UseGuards(AccessTokenGuard)
   getPosts(@Query() query: PaginatePostDto): Promise<{
     data: PostEntity[];
     total?: number;
