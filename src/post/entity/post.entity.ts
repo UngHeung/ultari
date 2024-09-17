@@ -2,7 +2,7 @@ import { IsOptional, Length } from 'class-validator';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
 import { PublicEnum, ContentTypeEnum } from '../enum/post.enum';
 import { PostImageEntity } from './post-image.entity';
 
@@ -38,6 +38,9 @@ export class PostEntity extends BaseModel {
 
   @ManyToOne(() => UserEntity, user => user.posts, { nullable: false })
   author: UserEntity;
+
+  @ManyToMany(() => UserEntity, user => user.likedPosts)
+  likers?: UserEntity[];
 
   @OneToMany(() => PostImageEntity, image => image.post)
   images?: PostImageEntity[];
