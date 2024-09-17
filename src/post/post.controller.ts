@@ -58,6 +58,11 @@ export class PostController {
     return this.postService.paginatePosts(query);
   }
 
+  @Get('/:id')
+  getPostById(@Param('id') id: number) {
+    return this.postService.getPostById(id);
+  }
+
   @Patch('/:id')
   @UseGuards(AccessTokenGuard)
   updatePost(
