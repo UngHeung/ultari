@@ -12,14 +12,14 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { PostService } from './post.service';
-import { CreatePostDto } from './dto/create-post.dto';
-import { PostEntity } from './entity/post.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
-import { UpdatePostDto } from './dto/update-post.dto';
-import { PaginatePostDto } from './dto/paginate-post.dto';
 import { ImageTypeEnum } from 'src/common/enum/image.enum';
+import { CreatePostDto } from './dto/create-post.dto';
+import { PaginatePostDto } from './dto/paginate-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
+import { PostEntity } from './entity/post.entity';
+import { PostService } from './post.service';
 
 @Controller('post')
 export class PostController {
@@ -58,6 +58,11 @@ export class PostController {
     return this.postService.paginatePosts(query);
   }
 
+  @Get('/:id')
+  getPostById(@Param('id') id: number) {
+    return this.postService.getPostById(id);
+  }
+
   @Patch('/:id')
   @UseGuards(AccessTokenGuard)
   updatePost(
@@ -66,6 +71,18 @@ export class PostController {
     @Body() dto: UpdatePostDto,
   ): Promise<PostEntity> {
     return this.postService.updatePost(req.user, id, dto);
+  }
+
+  @Patch('/:id/views')
+  @UseGuards(AccessTokenGuard)
+  increaseViews(@Req() req, @Param('id') id: number): Promise<void> {
+    return this.postService.increaseViews(req.user.id, id);
+  }
+
+  @Patch('/:id/likes')
+  @UseGuards(AccessTokenGuard)
+  increaseLikes(@Req() req, @Param('id') id: number): Promise<void> {
+    return this.postService.increaseLikes(req.user.id, id);
   }
 
   @Delete('/:id')

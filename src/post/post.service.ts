@@ -5,19 +5,19 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { UserEntity } from 'src/user/entity/user.entity';
-import { PostEntity } from './entity/post.entity';
-import { PostImageEntity } from './entity/post-image.entity';
-import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
-import { PaginatePostDto } from './dto/paginate-post.dto';
-import { CreatePostImageDto } from './dto/create-post-image.dto';
-import { CommonService } from 'src/common/common.service';
-import { basename, join } from 'path';
 import { promises } from 'fs';
+import { basename, join } from 'path';
+import { CommonService } from 'src/common/common.service';
 import { POST_IMAGE_PATH, TEMP_FOLDER_PATH } from 'src/common/const/path.const';
+import { UserEntity } from 'src/user/entity/user.entity';
+import { Repository } from 'typeorm';
 import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
+import { CreatePostImageDto } from './dto/create-post-image.dto';
+import { CreatePostDto } from './dto/create-post.dto';
+import { PaginatePostDto } from './dto/paginate-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
+import { PostImageEntity } from './entity/post-image.entity';
+import { PostEntity } from './entity/post.entity';
 
 @Injectable()
 export class PostService {
@@ -94,6 +94,46 @@ export class PostService {
     const newPost = this.postRepository.save(post);
 
     return newPost;
+  }
+
+  /**
+   * @param userId
+   * @param postId
+   */
+  async increaseViews(userId: number, postId: number): Promise<void> {
+    const post = await this.getPostById(postId);
+
+    if (userId === post.author.id) {
+      throw new BadRequestException(
+        '본인이 작성한 게시물의 조회수를 올릴 수 없습니다.',
+      );
+    }
+
+    post.viewCount++;
+    await this.postRepository.save(post);
+  }
+
+  /**
+   * @param userId
+   * @param postId
+   */
+  async increaseLikes(userId: number, postId: number): Promise<void> {
+    const post = await this.getPostById(postId);
+
+    if (userId === post.author.id) {
+      throw new BadRequestException(
+        '본인의 게시물에 좋아요를 누를 수 없습니다.',
+      );
+    }
+
+    /**
+     * @todo
+     * 좋아요 누른 게시물 many to one 연결
+     * 좋아요는 최대 1회만 가능하도록 설정
+     */
+
+    post.likeCount++;
+    await this.postRepository.save(post);
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { IsEmail, IsString, Length } from 'class-validator';
 import { Exclude, Transform } from 'class-transformer';
@@ -58,4 +58,7 @@ export class UserEntity extends BaseModel {
 
   @OneToMany(() => PostEntity, post => post.author)
   posts: PostEntity[];
+
+  @ManyToMany(() => PostEntity, post => post.likers)
+  likedPosts?: PostEntity[];
 }
