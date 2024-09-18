@@ -1,3 +1,4 @@
 export enum ImageTypeEnum {
-  POST_IMAGE,
+  POST_IMAGE = 'postImage',
+  PROFILE_IMAGE = 'profileImage',
 }
