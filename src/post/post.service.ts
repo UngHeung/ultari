@@ -117,10 +117,18 @@ export class PostService {
    * @param userId
    * @param postId
    */
-  async increaseLikes(userId: number, postId: number): Promise<void> {
-    const post = await this.getPostById(postId);
+  async updateLikes(user: UserEntity, postId: number): Promise<number> {
+    const post = await this.postRepository.findOne({
+      where: {
+        id: postId,
+      },
+      relations: {
+        author: true,
+        likers: true,
+      },
+    });
 
-    if (userId === post.author.id) {
+    if (user.id === post.author.id) {
       throw new BadRequestException(
         '본인의 게시물에 좋아요를 누를 수 없습니다.',
       );
@@ -132,8 +140,47 @@ export class PostService {
      * 좋아요는 최대 1회만 가능하도록 설정
      */
 
-    post.likeCount++;
+    const exists = this.existsUserInLikers(user.id, post);
+
+    if (!exists) {
+      post.likeCount++;
+    } else {
+      post.likeCount--;
+    }
+
+    post.likers = await this.saveOrDropPostLikers(user, post, !exists);
+
     await this.postRepository.save(post);
+
+    return post.likeCount;
+  }
+
+  existsUserInLikers(userId: number, post: PostEntity): boolean {
+    if (post.likers?.length <= 0) {
+      return false;
+    }
+
+    for (const liker of post?.likers) {
+      if (userId === liker.id) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  async saveOrDropPostLikers(
+    user: UserEntity,
+    post: PostEntity,
+    isSaved: boolean,
+  ): Promise<UserEntity[]> {
+    if (post.likers?.length <= 0 || isSaved) {
+      post.likers = [...post?.likers, user];
+    } else {
+      post.likers = post.likers.filter(liker => user.id !== liker.id);
+    }
+
+    return post.likers;
   }
 
   /**
