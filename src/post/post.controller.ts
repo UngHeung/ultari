@@ -81,8 +81,8 @@ export class PostController {
 
   @Patch('/:id/likes')
   @UseGuards(AccessTokenGuard)
-  increaseLikes(@Req() req, @Param('id') id: number): Promise<void> {
-    return this.postService.increaseLikes(req.user.id, id);
+  updateLikes(@Req() req, @Param('id') id: number): Promise<number> {
+    return this.postService.updateLikes(req.user, id);
   }
 
   @Delete('/:id')
