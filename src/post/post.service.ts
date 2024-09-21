@@ -142,13 +142,8 @@ export class PostService {
 
     const exists = this.existsUserInLikers(user.id, post);
 
-    if (!exists) {
-      post.likeCount++;
-    } else {
-      post.likeCount--;
-    }
-
     post.likers = await this.saveOrDropPostLikers(user, post, !exists);
+    post.likeCount = post.likers.length;
 
     await this.postRepository.save(post);
 
