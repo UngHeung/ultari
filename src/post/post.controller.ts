@@ -42,12 +42,12 @@ export class PostController {
     return await this.postService.getPostById(post.id);
   }
 
-  @Post()
+  @Post('/')
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FilesInterceptor('images'))
   uploadImage(@UploadedFiles() files: Express.Multer.File) {}
 
-  @Get()
+  @Get('/')
   getPosts(@Query() query: PaginatePostDto): Promise<{
     data: PostEntity[];
     total?: number;
