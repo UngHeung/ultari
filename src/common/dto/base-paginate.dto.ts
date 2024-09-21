@@ -16,7 +16,15 @@ export class BasePaginateDto {
 
   @IsIn(['ASC', 'DESC'], { message: '정렬은 ASC 또는 DESC로 입력해주세요.' })
   @IsOptional()
-  order__createAt?: 'ASC' | 'DESC' = 'ASC';
+  order__createAt?: 'ASC' | 'DESC';
+
+  @IsIn(['ASC', 'DESC'], { message: '정렬은 ASC 또는 DESC로 입력해주세요.' })
+  @IsOptional()
+  order__likeCount?: 'ASC' | 'DESC';
+
+  @IsIn(['ASC', 'DESC'], { message: '정렬은 ASC 또는 DESC로 입력해주세요.' })
+  @IsOptional()
+  order__viewCount?: 'ASC' | 'DESC';
 
   @IsNumber({}, { message: numberValidationMessage })
   @IsOptional()
