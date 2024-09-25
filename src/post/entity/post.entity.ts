@@ -33,7 +33,7 @@ export class PostEntity extends BaseModel {
     enum: ContentTypeEnum,
     default: ContentTypeEnum.FREE,
   })
-  type?: ContentTypeEnum;
+  contentType?: ContentTypeEnum;
 
   @Column({ default: 0 })
   @IsOptional()
