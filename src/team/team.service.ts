@@ -34,7 +34,7 @@ export class TeamService {
   }
 
   async getTeamById(id: number) {
-    const findOption = {
+    const findOption: FindOneOptions<TeamEntity> = {
       where: { id },
       relations: {
         member: true,
@@ -68,21 +68,46 @@ export class TeamService {
   }
 
   async changeSubLeader(applicant: UserEntity, dto: UpdateLeaderDto) {
-    const team = await this.teamRepository.findOneBy({ id: dto.teamId });
+    const teamFindOption: FindOneOptions<TeamEntity> = {
+      where: {
+        id: dto.teamId,
+      },
+      relations: {
+        leader: true,
+        subLeader: true,
+        member: true,
+      },
+    };
+
+    const team = await this.getTeam(teamFindOption);
+
+    if (!team) {
+      throw new BadRequestException('팀이 존재하지 않습니다.');
+    }
 
     if (applicant.id !== team.leader.id) {
       throw new UnauthorizedException('권한이 없습니다. 팀 리더가 아닙니다.');
     }
 
-    if (this.findTeamMember(team.member, dto.userId)) {
-      throw new BadRequestException(`${team.name} 팀의 멤버가 아닙니다.`);
+    if (team.leader.id === dto.userId) {
+      throw new BadRequestException('리더는 서브리더가 될 수 없습니다.');
+    }
+
+    if (!this.findTeamMember(team.member, dto.userId)) {
+      throw new BadRequestException(`${team.name} (팀)의 멤버가 아닙니다.`);
     }
 
     if (!dto.userId) {
-      team.leader = null;
+      team.subLeader = null;
     } else {
       const user = await this.userRepository.findOneBy({ id: dto.userId });
-      team.leader = user;
+
+      if (!user) {
+        team.subLeader = null;
+        throw new BadRequestException('유저가 존재하지 않습니다.');
+      }
+
+      team.subLeader = user;
     }
 
     this.teamRepository.save(team);
