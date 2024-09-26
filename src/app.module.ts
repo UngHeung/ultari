@@ -23,10 +23,10 @@ import { TeamModule } from './team/team.module';
       serveRoot: '/public',
     }),
     AuthModule,
-    CommonModule,
     UserModule,
-    PostModule,
     TeamModule,
+    PostModule,
+    CommonModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor },
