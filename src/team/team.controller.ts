@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
+  Param,
   Patch,
   Post,
   Req,
@@ -22,6 +24,18 @@ export class TeamController {
     return this.teamService.createTeam(req.user, dto);
   }
 
+  @Get('/:id')
+  @UseGuards(AccessTokenGuard)
+  getTeamById(@Param('id') id: number) {
+    return this.teamService.getTeamById(id);
+  }
+
+  @Get('/')
+  @UseGuards(AccessTokenGuard)
+  getTeamListAll() {
+    return this.teamService.getTeamListAll();
+  }
+
   @Patch('/leader')
   toggleLeader(@Body() dto: UpdateLeaderDto) {
     return this.teamService.changeLeader(dto);
@@ -34,8 +48,8 @@ export class TeamController {
 
   @Patch('/member/sign')
   @UseGuards(AccessTokenGuard)
-  addMember(@Req() req, @Body() userId: number, @Body() teamId: number) {
-    return this.teamService.addMember(req.user, teamId, userId);
+  addMember(@Req() req, @Body() dto: { teamId: number; userId: number }) {
+    return this.teamService.addMember(req.user, dto);
   }
 
   @Patch('/member/resign')
