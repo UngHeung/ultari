@@ -17,6 +17,7 @@ export class TeamEntity extends BaseModel {
   leader: UserEntity;
 
   @OneToOne(() => UserEntity, user => user.subLead)
+  @JoinColumn()
   subLeader?: UserEntity;
 
   @Column()
