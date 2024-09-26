@@ -15,11 +15,11 @@ export class UpdatePostDto extends PartialType(PostEntity) {
 
   @IsString()
   @IsOptional()
-  visibility?: PublicEnum;
+  contentType?: ContentTypeEnum;
 
   @IsString()
   @IsOptional()
-  type?: ContentTypeEnum;
+  visibility?: PublicEnum;
 
   @IsString({ each: true })
   @IsOptional()

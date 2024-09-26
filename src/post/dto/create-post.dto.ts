@@ -1,7 +1,6 @@
 import { PickType } from '@nestjs/mapped-types';
-import { PostEntity } from '../entity/post.entity';
 import { IsOptional, IsString } from 'class-validator';
-import { PostImageEntity } from '../entity/post-image.entity';
+import { PostEntity } from '../entity/post.entity';
 import { ContentTypeEnum, PublicEnum } from '../enum/post.enum';
 
 export class CreatePostDto extends PickType(PostEntity, [
@@ -10,19 +9,15 @@ export class CreatePostDto extends PickType(PostEntity, [
   'visibility',
   'contentType',
 ]) {
-  @IsString({ each: true })
-  @IsOptional()
-  images?: string[] = [];
-
   @IsString()
   @IsOptional()
-  comments?: string = '';
+  contentType?: ContentTypeEnum;
 
   @IsString()
   @IsOptional()
   visibility?: PublicEnum;
 
-  @IsString()
+  @IsString({ each: true })
   @IsOptional()
-  contentType?: ContentTypeEnum;
+  images?: string[] = [];
 }
