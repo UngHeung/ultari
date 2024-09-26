@@ -7,7 +7,15 @@ import { emailValidationMessage } from 'src/common/validator/message/email-valid
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { stringValidationMessage } from 'src/common/validator/message/type-validation.message';
 import { PostEntity } from 'src/post/entity/post.entity';
-import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
+import { TeamEntity } from 'src/team/entity/team.entity';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 
 export enum RoleEnum {
   USER = 'ROLE_USER',
@@ -61,4 +69,13 @@ export class UserEntity extends BaseModel {
 
   @ManyToMany(() => PostEntity, post => post.likers)
   likedPosts?: PostEntity[];
+
+  @ManyToOne(() => TeamEntity, team => team.member)
+  team: TeamEntity;
+
+  @OneToOne(() => TeamEntity, team => team.leader)
+  lead: TeamEntity;
+
+  @OneToOne(() => TeamEntity, team => team.subLeader)
+  subLead: TeamEntity;
 }

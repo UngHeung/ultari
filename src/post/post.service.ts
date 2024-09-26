@@ -89,7 +89,7 @@ export class PostService {
     dto.content && (post.content = dto.content);
     dto.images && (post.images = dto.images);
     dto.visibility && (post.visibility = dto.visibility);
-    dto.type && (post.contentType = dto.type);
+    dto.contentType && (post.contentType = dto.contentType);
 
     const newPost = this.postRepository.save(post);
 
