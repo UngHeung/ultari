@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { Repository } from 'typeorm';
@@ -35,8 +35,15 @@ export class TeamService {
     return team.leader;
   }
 
-  async changeSubLeader(teamId: number, userId?: number) {
+  async changeSubLeader(
+    applicant: UserEntity,
+    teamId: number,
+    userId?: number,
+  ) {
     const team = await this.teamRepository.findOneBy({ id: teamId });
+    if (applicant.id !== team.leader.id) {
+      throw new UnauthorizedException('권한이 없습니다. 팀 리더가 아닙니다.');
+    }
 
     if (!userId) {
       team.leader = null;
@@ -47,5 +54,9 @@ export class TeamService {
 
     this.teamRepository.save(team);
     return team;
+  }
+
+  addMember(teamId: number, userId: number) {
+    //
   }
 }

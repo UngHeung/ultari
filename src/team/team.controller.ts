@@ -16,7 +16,18 @@ export class TeamController {
   }
 
   @Patch('/leader/sub')
-  changeSubLeader(@Body() userId: number, @Body() teamId: number) {
-    return this.teamService.changeSubLeader(teamId, userId);
+  changeSubLeader(@Req() req, @Body() userId: number, @Body() teamId: number) {
+    return this.teamService.changeSubLeader(req.user, teamId, userId);
   }
+
+  @Patch('/member/sign')
+  addMember(@Body() userId: number, @Body() teamId: number) {
+    return this.teamService.addMember(teamId, userId);
+  }
+
+  @Patch('/member/resign')
+  deleteMember() {}
+
+  @Delete('/')
+  deleteTeam() {}
 }
