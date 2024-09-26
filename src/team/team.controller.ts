@@ -33,8 +33,9 @@ export class TeamController {
   }
 
   @Patch('/member/sign')
-  addMember(@Body() userId: number, @Body() teamId: number) {
-    return this.teamService.addMember(teamId, userId);
+  @UseGuards(AccessTokenGuard)
+  addMember(@Req() req, @Body() userId: number, @Body() teamId: number) {
+    return this.teamService.addMember(req.user, teamId, userId);
   }
 
   @Patch('/member/resign')
