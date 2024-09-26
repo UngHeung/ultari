@@ -25,4 +25,13 @@ export class TeamService {
     const newTeam = await this.teamRepository.save(team);
     return newTeam;
   }
+
+  async changeLeader(teamId: number, userId: number) {
+    const team = await this.teamRepository.findOneBy({ id: teamId });
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    team.leader = user;
+    this.teamRepository.save(team);
+    return team.leader;
+  }
 }

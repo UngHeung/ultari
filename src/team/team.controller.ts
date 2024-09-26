@@ -9,4 +9,9 @@ export class TeamController {
   createTeam(@Req() req) {
     return this.teamService.createTeam(req.user.id);
   }
+
+  @Patch('/leader')
+  toggleLeader(@Body() userId: number, @Body() teamId: number) {
+    return this.teamService.changeLeader(teamId, userId);
+  }
 }
