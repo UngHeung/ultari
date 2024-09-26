@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { CreateTeamDto } from './dto/create-team.dto';
+import { UpdateLeaderDto } from './dto/update-leader.dto';
 import { TeamService } from './team.service';
 
 @Controller('team')
@@ -22,13 +23,13 @@ export class TeamController {
   }
 
   @Patch('/leader')
-  toggleLeader(@Body() userId: number, @Body() teamId: number) {
-    return this.teamService.changeLeader(teamId, userId);
+  toggleLeader(@Body() dto: UpdateLeaderDto) {
+    return this.teamService.changeLeader(dto);
   }
 
   @Patch('/leader/sub')
-  changeSubLeader(@Req() req, @Body() userId: number, @Body() teamId: number) {
-    return this.teamService.changeSubLeader(req.user, teamId, userId);
+  changeSubLeader(@Req() req, @Body() dto: UpdateLeaderDto) {
+    return this.teamService.changeSubLeader(req.user, dto);
   }
 
   @Patch('/member/sign')
