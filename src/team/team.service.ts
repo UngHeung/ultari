@@ -6,5 +6,23 @@ import { TeamEntity } from './entity/team.entity';
 
 @Injectable()
 export class TeamService {
-  constructor() {}
+  constructor(
+    @InjectRepository(TeamEntity)
+    private readonly teamRepository: Repository<TeamEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+  ) {}
+
+  async createTeam(id: number) {
+    const user = await this.userRepository.findOneBy({ id });
+
+    const team = this.teamRepository.create({
+      leader: user,
+      member: [],
+      active: false,
+    });
+
+    const newTeam = await this.teamRepository.save(team);
+    return newTeam;
+  }
 }
