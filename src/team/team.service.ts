@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { Repository } from 'typeorm';
@@ -43,6 +47,12 @@ export class TeamService {
     const team = await this.teamRepository.findOneBy({ id: teamId });
     if (applicant.id !== team.leader.id) {
       throw new UnauthorizedException('권한이 없습니다. 팀 리더가 아닙니다.');
+    }
+
+    const userExist = team.member.filter(member => member.id === userId);
+
+    if (userExist) {
+      throw new BadRequestException(`${team.name} 팀의 멤버가 아닙니다.`);
     }
 
     if (!userId) {
