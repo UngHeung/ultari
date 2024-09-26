@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Patch, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
+import { CreateTeamDto } from './dto/create-team.dto';
 import { TeamService } from './team.service';
 
 @Controller('team')
@@ -6,8 +16,9 @@ export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
   @Post('/')
-  createTeam(@Req() req) {
-    return this.teamService.createTeam(req.user.id);
+  @UseGuards(AccessTokenGuard)
+  createTeam(@Req() req, @Body() dto: CreateTeamDto) {
+    return this.teamService.createTeam(req.user, dto);
   }
 
   @Patch('/leader')

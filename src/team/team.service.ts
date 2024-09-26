@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { Repository } from 'typeorm';
+import { CreateTeamDto } from './dto/create-team.dto';
 import { TeamEntity } from './entity/team.entity';
 
 @Injectable()
@@ -13,13 +14,12 @@ export class TeamService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async createTeam(id: number) {
-    const user = await this.userRepository.findOneBy({ id });
-
+  async createTeam(user: Omit<UserEntity, 'password'>, dto: CreateTeamDto) {
     const team = this.teamRepository.create({
       leader: user,
-      member: [],
+      name: dto.name,
       active: false,
+      member: [],
     });
 
     const newTeam = await this.teamRepository.save(team);
