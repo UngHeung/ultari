@@ -23,6 +23,8 @@ export class TeamService {
     const team = this.teamRepository.create({
       leader: user,
       name: dto.name,
+      community: dto.community,
+      description: dto.description,
       active: false,
       member: [user],
     });
