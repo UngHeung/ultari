@@ -14,4 +14,9 @@ export class TeamController {
   toggleLeader(@Body() userId: number, @Body() teamId: number) {
     return this.teamService.changeLeader(teamId, userId);
   }
+
+  @Patch('/leader/sub')
+  changeSubLeader(@Body() userId: number, @Body() teamId: number) {
+    return this.teamService.changeSubLeader(teamId, userId);
+  }
 }

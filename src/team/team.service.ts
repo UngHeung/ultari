@@ -34,4 +34,18 @@ export class TeamService {
     this.teamRepository.save(team);
     return team.leader;
   }
+
+  async changeSubLeader(teamId: number, userId?: number) {
+    const team = await this.teamRepository.findOneBy({ id: teamId });
+
+    if (!userId) {
+      team.leader = null;
+    } else {
+      const user = await this.userRepository.findOneBy({ id: userId });
+      team.leader = user;
+    }
+
+    this.teamRepository.save(team);
+    return team;
+  }
 }
