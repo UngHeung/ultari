@@ -62,4 +62,9 @@ export class TeamService {
     this.teamRepository.save(team);
     return team;
   }
+
+  findTeamMember(team: UserEntity[], userId: number) {
+    const result = team.filter(member => member.id === userId);
+    return result ? true : false;
+  }
 }
