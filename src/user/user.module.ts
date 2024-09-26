@@ -10,6 +10,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { PUBLIC_FOLDER_PATH } from 'src/common/const/path.const';
 import { PostEntity } from 'src/post/entity/post.entity';
 import { CommonModule } from 'src/common/common.module';
+import { TeamModule } from 'src/team/team.module';
+import { TeamEntity } from 'src/team/entity/team.entity';
 
 @Module({
   imports: [
@@ -18,9 +20,10 @@ import { CommonModule } from 'src/common/common.module';
       rootPath: PUBLIC_FOLDER_PATH,
       serveRoot: '/public',
     }),
-    TypeOrmModule.forFeature([UserEntity, PostEntity]),
+    TypeOrmModule.forFeature([UserEntity, PostEntity, TeamEntity]),
     forwardRef(() => AuthModule),
     CommonModule,
+    TeamModule,
   ],
   exports: [UserService],
   controllers: [UserController],
