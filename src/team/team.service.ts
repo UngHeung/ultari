@@ -34,7 +34,7 @@ export class TeamService {
   }
 
   async getTeamById(id: number) {
-    const findOption: FindOneOptions<TeamEntity> = {
+    const findOptions: FindOneOptions<TeamEntity> = {
       where: { id },
       relations: {
         member: true,
@@ -43,13 +43,23 @@ export class TeamService {
       },
     };
 
-    const team = await this.getTeam(findOption);
+    const team = await this.getTeam(findOptions);
+
+    if (!team) {
+      throw new BadRequestException('팀이 존재하지 않습니다.');
+    }
 
     return team;
   }
 
   async getTeamListAll() {
-    const teamList = await this.getTeamList();
+    const findOptions: FindOneOptions<TeamEntity> = {
+      relations: {
+        leader: true,
+      },
+    };
+
+    const teamList = await this.getTeamList(findOptions);
     return teamList;
   }
 
