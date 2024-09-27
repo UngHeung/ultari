@@ -37,11 +37,13 @@ export class TeamController {
   }
 
   @Patch('/leader')
-  toggleLeader(@Body() dto: UpdateLeaderDto) {
+  @UseGuards(AccessTokenGuard)
+  changeLeader(@Body() dto: UpdateLeaderDto) {
     return this.teamService.changeLeader(dto);
   }
 
   @Patch('/leader/sub')
+  @UseGuards(AccessTokenGuard)
   changeSubLeader(@Req() req, @Body() dto: UpdateLeaderDto) {
     return this.teamService.changeSubLeader(req.user, dto);
   }
@@ -53,6 +55,7 @@ export class TeamController {
   }
 
   @Patch('/member/resign')
+  @UseGuards(AccessTokenGuard)
   deleteMember() {}
 
   @Delete('/')

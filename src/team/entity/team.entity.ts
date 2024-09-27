@@ -9,6 +9,14 @@ export class TeamEntity extends BaseModel {
   @IsString()
   name: string;
 
+  @Column()
+  @IsString()
+  community: string;
+
+  @Column()
+  @IsString()
+  description?: string;
+
   @OneToMany(() => UserEntity, user => user.team)
   member: UserEntity[];
 
