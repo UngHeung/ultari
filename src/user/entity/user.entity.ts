@@ -56,7 +56,7 @@ export class UserEntity extends BaseModel {
     nullable: true,
   })
   @Transform(({ value }) => value && `${join(PROFILE_IMAGE_PATH, value)}`)
-  profilePath?: string;
+  profile?: string;
 
   @Column({
     enum: Object.values(RoleEnum),

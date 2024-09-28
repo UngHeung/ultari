@@ -91,6 +91,7 @@ export class AuthService {
       sub: user.id,
       name: user.name,
       role: user.role,
+      profile: user.profile,
       type: isRefreshToken ? 'refresh' : 'access',
     };
 

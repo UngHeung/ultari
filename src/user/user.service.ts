@@ -124,9 +124,9 @@ export class UserService {
     }
 
     if (userProfile) {
-      user.profilePath &&
-        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profilePath);
-      user.profilePath = userProfile;
+      user.profile &&
+        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profile);
+      user.profile = userProfile;
     }
 
     this.userRepository.save(user);
