@@ -31,6 +31,23 @@ export class UserController {
     return this.userService.getUserById(req.user.id);
   }
 
+  @Get('/myinfo/team')
+  @UseGuards(AccessTokenGuard)
+  getMyInfoAndTeam(@Req() req) {
+    return this.userService.getUserWithTeam(req.user.id);
+  }
+
+  @Get('/myinfo/post')
+  @UseGuards(AccessTokenGuard)
+  getMyINfoAndPost(@Req() req) {
+    return this.userService.getUserWithPosts(req.user.id);
+  }
+
+  @Get('/myinfo/team-and-post')
+  getUserWithTeamAndPosts(@Req() req) {
+    return this.userService.getUserWithTeamAndPosts(req.user.id);
+  }
+
   @Get('/:id')
   @UseGuards(AccessTokenGuard)
   getUserById(@Param('id') id: number) {

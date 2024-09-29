@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -6,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entity/user.entity';
-import { Repository } from 'typeorm';
+import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
 import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
@@ -52,7 +53,7 @@ export class UserService {
    * 3. return users
    */
   async getUsers(): Promise<UserEntity[]> {
-    const user = await this.userRepository.find();
+    const user = await this.getManyUsers();
     return user;
   }
 
@@ -62,9 +63,42 @@ export class UserService {
    * 3. return user
    */
   async getUserById(id: number): Promise<UserEntity> {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user)
-      throw new NotFoundException(`계정이 존재하지 않습니다. ID : ${id}`);
+    const user = await this.getOneUser({ where: { id } });
+    return user;
+  }
+
+  async getUserWithTeam(id: number) {
+    const user = await this.getOneUser({
+      where: { id },
+      relations: { team: true, lead: true, subLead: true },
+    });
+
+    return user;
+  }
+
+  async getUserWithPosts(id: number) {
+    const user = await this.getOneUser({
+      where: { id },
+      relations: { posts: true, likedPosts: true },
+    });
+
+    return user;
+  }
+
+  async getUserWithTeamAndPosts(id: number) {
+    const user = await this.getOneUser({
+      where: { id },
+      relations: {
+        team: true,
+        lead: true,
+        subLead: true,
+        posts: true,
+      },
+    });
+  }
+
+  async getUserByFindOptions(findOptions: FindOneOptions<UserEntity>) {
+    const user = await this.getOneUser(findOptions);
     return user;
   }
 
@@ -74,7 +108,7 @@ export class UserService {
    * 3. return user
    */
   async getUserByUserAccount(account: string): Promise<UserEntity> {
-    const user = await this.userRepository.findOne({ where: { account } });
+    const user = await this.getOneUser({ where: { account } });
     return user;
   }
 
@@ -124,13 +158,33 @@ export class UserService {
     }
 
     if (userProfile) {
-      user.profilePath &&
-        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profilePath);
-      user.profilePath = userProfile;
+      user.profile &&
+        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profile);
+      user.profile = userProfile;
     }
 
     this.userRepository.save(user);
 
     return user;
+  }
+
+  async getOneUser(findOptions: FindOneOptions<UserEntity>) {
+    const user = await this.userRepository.findOne(findOptions);
+
+    if (!user) {
+      throw new NotFoundException('해당 유저가 존재하지 않습니다.');
+    }
+
+    return user;
+  }
+
+  async getManyUsers(findOptions?: FindManyOptions<UserEntity>) {
+    const users = await this.userRepository.find(findOptions ?? null);
+
+    if (!users) {
+      throw new NotFoundException('해당 유저가 존재하지 않습니다.');
+    }
+
+    return users;
   }
 }

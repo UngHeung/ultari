@@ -52,11 +52,15 @@ export class UserEntity extends BaseModel {
   @IsEmail({}, { message: emailValidationMessage })
   email: string;
 
+  @Column({ unique: true })
+  @IsString({ message: stringValidationMessage })
+  community?: string;
+
   @Column({
     nullable: true,
   })
   @Transform(({ value }) => value && `${join(PROFILE_IMAGE_PATH, value)}`)
-  profilePath?: string;
+  profile?: string;
 
   @Column({
     enum: Object.values(RoleEnum),
