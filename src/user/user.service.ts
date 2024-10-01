@@ -1,18 +1,18 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from './entity/user.entity';
+import * as bcrypt from 'bcryptjs';
+import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
+import { CommonService } from 'src/common/common.service';
+import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
 import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
-import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
-import { CommonService } from 'src/common/common.service';
-import * as bcrypt from 'bcryptjs';
+import { UserEntity } from './entity/user.entity';
 
 @Injectable()
 export class UserService {
@@ -72,6 +72,7 @@ export class UserService {
       where: { id },
       relations: { team: true, lead: true, subLead: true },
     });
+    Logger.log(user);
 
     return user;
   }
@@ -127,7 +128,7 @@ export class UserService {
     userProfile: string,
   ): Promise<UserEntity> {
     const user = await this.getUserById(id);
-    const { password, phone, email }: UpdateUserDto = updateUserDto;
+    const { password, phone, email, community }: UpdateUserDto = updateUserDto;
 
     if (!(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('비밀번호를 확인해주세요.');
@@ -164,6 +165,10 @@ export class UserService {
     }
 
     this.userRepository.save(user);
+
+    if (community) {
+      user.community = community;
+    }
 
     return user;
   }
