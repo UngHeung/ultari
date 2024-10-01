@@ -1,7 +1,14 @@
-import { Body, Controller, Headers, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { UserEntity } from 'src/user/entity/user.entity';
 import { AuthService } from './auth.service';
 import { AuthSignUpDto } from './dto/auth-signup.dto';
-import { UserEntity } from 'src/user/entity/user.entity';
 import { BasicTokenGuard } from './guard/basic-token.guard';
 import {
   AccessTokenGuard,
@@ -52,5 +59,15 @@ export class AuthController {
   @Post('/logout')
   logoutUser(): { accessToken: string; refreshToken: string } {
     return this.authService.logoutUser();
+  }
+
+  @Post('/verify')
+  @UseGuards(AccessTokenGuard)
+  verifyPassword(
+    @Req() req,
+    @Body() data: { password: string },
+  ): Promise<boolean> {
+    const { password } = data;
+    return this.authService.verifyPassword(req.user, password);
   }
 }

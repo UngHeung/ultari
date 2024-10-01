@@ -13,4 +13,7 @@ export class UpdateUserDto extends PartialType(UserEntity) {
 
   @IsOptional()
   userProfilePath?: string;
+
+  @IsOptional()
+  community?: string;
 }

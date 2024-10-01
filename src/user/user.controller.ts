@@ -33,7 +33,7 @@ export class UserController {
 
   @Get('/myinfo/team')
   @UseGuards(AccessTokenGuard)
-  getMyInfoAndTeam(@Req() req, @Body() password: string) {
+  getMyInfoAndTeam(@Req() req) {
     return this.userService.getUserWithTeam(req.user.id);
   }
 
