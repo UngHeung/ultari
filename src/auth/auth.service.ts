@@ -1,15 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UserEntity } from '../user/entity/user.entity';
-import { AuthSignUpDto } from './dto/auth-signup.dto';
-import { AuthLoginDto } from './dto/auth-login.dto';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from 'src/user/user.service';
+import * as bcrypt from 'bcryptjs';
 import {
   JWT_ACCESS_EXPIRES_IN,
   JWT_REFRESH_EXPIRES_IN,
   JWT_SECRET,
 } from 'src/configs/const/config.const';
-import * as bcrypt from 'bcryptjs';
+import { UserService } from 'src/user/user.service';
+import { UserEntity } from '../user/entity/user.entity';
+import { AuthLoginDto } from './dto/auth-login.dto';
+import { AuthSignUpDto } from './dto/auth-signup.dto';
 
 @Injectable()
 export class AuthService {
@@ -202,5 +206,23 @@ export class AuthService {
     const salt = await bcrypt.genSalt();
 
     return await bcrypt.hash(userPassword, salt);
+  }
+
+  async verifyPassword(user: UserEntity, password: string): Promise<boolean> {
+    if (!password) {
+      throw new BadRequestException('비밀번호를 입력해주세요.');
+    }
+
+    const findUser = await this.userService.getUserByUserAccount(user.account);
+    console.log('findUser : ', findUser);
+    console.log('password : ', password);
+    const passOk = await bcrypt.compare(password, findUser.password);
+    console.log('passOk : ', passOk);
+
+    if (!passOk) {
+      throw new UnauthorizedException('비밀번호를 확인해주세요.');
+    }
+
+    return passOk;
   }
 }
