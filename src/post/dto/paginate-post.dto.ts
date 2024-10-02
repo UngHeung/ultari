@@ -1,5 +1,6 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { BasePaginateDto } from 'src/common/dto/base-paginate.dto';
+import { ContentTypeEnum, PublicEnum } from '../enum/post.enum';
 
 export class PaginatePostDto extends BasePaginateDto {
   @IsNumber()
@@ -13,4 +14,12 @@ export class PaginatePostDto extends BasePaginateDto {
   @IsString()
   @IsOptional()
   where__title__i_like?: string;
+
+  @IsString()
+  @IsOptional()
+  where__visibility?: PublicEnum;
+
+  @IsString()
+  @IsOptional()
+  where__contentType?: ContentTypeEnum;
 }
