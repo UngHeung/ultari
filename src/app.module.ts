@@ -14,7 +14,7 @@ import { TeamModule } from './team/team.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: '.env',
+      envFilePath: '.env.dev',
       isGlobal: true,
     }),
     TypeOrmModule.forRoot(getTypeOrmConfig()),
