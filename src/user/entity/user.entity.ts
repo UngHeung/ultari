@@ -52,7 +52,7 @@ export class UserEntity extends BaseModel {
   @IsEmail({}, { message: emailValidationMessage })
   email: string;
 
-  @Column({ unique: true })
+  @Column()
   @IsString({ message: stringValidationMessage })
   community?: string;
 
