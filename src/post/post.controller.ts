@@ -59,8 +59,8 @@ export class PostController {
   }
 
   @Get('/:id')
-  getPostById(@Param('id') id: number) {
-    return this.postService.getPostById(id);
+  getPostById(@Param('id') id: string) {
+    return this.postService.getPostById(+id);
   }
 
   @Patch('/:id')
