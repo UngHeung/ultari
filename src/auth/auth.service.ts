@@ -214,10 +214,7 @@ export class AuthService {
     }
 
     const findUser = await this.userService.getUserByUserAccount(user.account);
-    console.log('findUser : ', findUser);
-    console.log('password : ', password);
     const passOk = await bcrypt.compare(password, findUser.password);
-    console.log('passOk : ', passOk);
 
     if (!passOk) {
       throw new UnauthorizedException('비밀번호를 확인해주세요.');
