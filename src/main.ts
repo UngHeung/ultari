@@ -15,7 +15,11 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: ['http://localhost:3000, https://ultari.xyz'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://ultari.xyz',
+    ],
     credentials: true,
   });
   await app.listen(3000);
