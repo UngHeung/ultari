@@ -54,14 +54,10 @@ export class UserController {
     return this.userService.getUserById(id);
   }
 
-  @Patch('/:id')
+  @Patch('/')
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FileInterceptor('userProfile'))
-  updateUser(
-    @Param('id') id: number,
-    @Body() updateUserDto: UpdateUserDto,
-    @UploadedFile() file?: Express.Multer.File,
-  ) {
-    return this.userService.updateUser(id, updateUserDto, file?.filename);
+  updateUser(@Req() req, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.updateUser(req.user, updateUserDto);
   }
 }
