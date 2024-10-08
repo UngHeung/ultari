@@ -3,16 +3,14 @@ import { PartialType } from '@nestjs/mapped-types';
 import { UserEntity } from '../entity/user.entity';
 
 export class UpdateUserDto extends PartialType(UserEntity) {
-  userPassword: string;
+  @IsOptional()
+  phone?: string;
 
   @IsOptional()
-  userPhone?: string;
+  email?: string;
 
   @IsOptional()
-  userEmail?: string;
-
-  @IsOptional()
-  userProfilePath?: string;
+  profile?: string;
 
   @IsOptional()
   community?: string;
