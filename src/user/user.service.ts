@@ -123,16 +123,10 @@ export class UserService {
    * 7. save updated user
    */
   async updateUser(
-    id: number,
+    user: UserEntity,
     updateUserDto: UpdateUserDto,
-    userProfile: string,
   ): Promise<UserEntity> {
-    const user = await this.getUserById(id);
-    const { password, phone, email, community }: UpdateUserDto = updateUserDto;
-
-    if (!(await bcrypt.compare(password, user.password))) {
-      throw new UnauthorizedException('비밀번호를 확인해주세요.');
-    }
+    const { phone, email, community, profile }: UpdateUserDto = updateUserDto;
 
     if (phone && user.phone !== phone) {
       const userPhoneExists = await this.userRepository.findOne({
@@ -158,10 +152,10 @@ export class UserService {
       user.email = email;
     }
 
-    if (userProfile) {
+    if (profile) {
       user.profile &&
         this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profile);
-      user.profile = userProfile;
+      user.profile = profile;
     }
 
     this.userRepository.save(user);
