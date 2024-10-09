@@ -18,12 +18,7 @@ async function bootstrap() {
 
   app.useStaticAssets('public', { prefix: '/public/' });
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://ultari.xyz',
-      'https://www.ultari.xyz',
-    ],
+    origin: true,
     credentials: true,
   });
   await app.listen(3000);
