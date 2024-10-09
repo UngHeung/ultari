@@ -21,10 +21,8 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
-      'http://api-ultari.xyz:3000',
-      'https://api-ultari.xyz:3000',
-      'http://ultari.xyz:3000',
-      'https://ultari.xyz:3000',
+      'https://ultari.xyz',
+      'https://www.ultari.xyz',
     ],
     credentials: true,
   });
