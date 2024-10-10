@@ -17,7 +17,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-
+  app.setGlobalPrefix('api');
   app.useStaticAssets('public', { prefix: '/public/' });
   app.enableCors({
     origin: [
