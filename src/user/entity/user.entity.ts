@@ -11,6 +11,7 @@ import { TeamEntity } from 'src/team/entity/team.entity';
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -78,8 +79,10 @@ export class UserEntity extends BaseModel {
   team: TeamEntity;
 
   @OneToOne(() => TeamEntity, team => team.leader)
+  @JoinColumn()
   lead: TeamEntity;
 
   @OneToOne(() => TeamEntity, team => team.subLeader)
+  @JoinColumn()
   subLead: TeamEntity;
 }
