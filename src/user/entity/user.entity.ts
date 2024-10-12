@@ -1,7 +1,5 @@
-import { Exclude, Transform } from 'class-transformer';
-import { IsEmail, IsString, Length } from 'class-validator';
-import { join } from 'path';
-import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
+import { Exclude } from 'class-transformer';
+import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { emailValidationMessage } from 'src/common/validator/message/email-validation.message';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
@@ -11,11 +9,13 @@ import { TeamEntity } from 'src/team/entity/team.entity';
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToMany,
   ManyToOne,
   OneToMany,
   OneToOne,
 } from 'typeorm';
+import { ProfileImageEntity } from './profile-image.entity';
 
 export enum RoleEnum {
   USER = 'ROLE_USER',
@@ -56,11 +56,10 @@ export class UserEntity extends BaseModel {
   @IsString({ message: stringValidationMessage })
   community?: string;
 
-  @Column({
-    nullable: true,
-  })
-  @Transform(({ value }) => value && `${join(PROFILE_IMAGE_PATH, value)}`)
-  profile?: string;
+  @IsOptional()
+  @OneToOne(() => ProfileImageEntity, profile => profile.user)
+  @JoinColumn()
+  profile?: ProfileImageEntity;
 
   @Column({
     enum: Object.values(RoleEnum),
@@ -78,8 +77,10 @@ export class UserEntity extends BaseModel {
   team: TeamEntity;
 
   @OneToOne(() => TeamEntity, team => team.leader)
+  @JoinColumn()
   lead: TeamEntity;
 
   @OneToOne(() => TeamEntity, team => team.subLeader)
+  @JoinColumn()
   subLead: TeamEntity;
 }

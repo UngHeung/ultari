@@ -95,7 +95,7 @@ export class AuthService {
       sub: user.id,
       name: user.name,
       role: user.role,
-      profile: user.profile,
+      profile: user.profile?.path ?? null,
       community: user.community,
       type: isRefreshToken ? 'refresh' : 'access',
     };
