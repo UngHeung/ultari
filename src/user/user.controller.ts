@@ -14,6 +14,7 @@ import { UserEntity } from './entity/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ImageTypeEnum } from 'src/common/enum/image.enum';
 
 @Controller('user')
 export class UserController {
@@ -57,7 +58,15 @@ export class UserController {
   @Patch('/')
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FileInterceptor('userProfile'))
-  updateUser(@Req() req, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.updateUser(req.user, updateUserDto);
+  async updateUser(@Req() req, @Body() dto: UpdateUserDto) {
+    const user = await this.userService.updateUser(req.user, dto);
+
+    await this.userService.createProfileImage({
+      user,
+      path: dto.path,
+      type: ImageTypeEnum.PROFILE_IMAGE,
+    });
+
+    return await this.userService.getUserById(req.user.id);
   }
 }

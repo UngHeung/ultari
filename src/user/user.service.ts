@@ -3,15 +3,20 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as bcrypt from 'bcryptjs';
+import { promises } from 'fs';
+import { basename, join } from 'path';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
 import { CommonService } from 'src/common/common.service';
-import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
+import {
+  PROFILE_IMAGE_PATH,
+  TEMP_FOLDER_PATH,
+} from 'src/common/const/path.const';
 import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
+import { CreateProfileImageDto } from './dto/create-profile-image.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ProfileImageEntity } from './entity/profile-image.entity';
 import { UserEntity } from './entity/user.entity';
 
 @Injectable()
@@ -19,6 +24,8 @@ export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(ProfileImageEntity)
+    private readonly profileImageRepository: Repository<ProfileImageEntity>,
     private readonly commonService: CommonService,
   ) {}
 
@@ -63,7 +70,10 @@ export class UserService {
    * 3. return user
    */
   async getUserById(id: number): Promise<UserEntity> {
-    const user = await this.getOneUser({ where: { id } });
+    const user = await this.getOneUser({
+      where: { id },
+      relations: { profile: true },
+    });
     return user;
   }
 
@@ -96,6 +106,8 @@ export class UserService {
         posts: true,
       },
     });
+
+    return user;
   }
 
   async getUserByFindOptions(findOptions: FindOneOptions<UserEntity>) {
@@ -109,7 +121,10 @@ export class UserService {
    * 3. return user
    */
   async getUserByUserAccount(account: string): Promise<UserEntity> {
-    const user = await this.getOneUser({ where: { account } });
+    const user = await this.getOneUser({
+      where: { account },
+      relations: { profile: true },
+    });
     return user;
   }
 
@@ -153,18 +168,31 @@ export class UserService {
     }
 
     if (profile) {
-      user.profile &&
-        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profile);
+      if (user.profile.path.length > 0) {
+        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profile.path);
+      }
+
       user.profile = profile;
     }
-
-    this.userRepository.save(user);
 
     if (community) {
       user.community = community;
     }
 
+    this.userRepository.save(user);
+
     return user;
+  }
+
+  createProfileImage(dto: CreateProfileImageDto) {
+    const tempFilePath = join(TEMP_FOLDER_PATH, dto.path);
+    const fileName = basename(tempFilePath);
+    const newPath = join(PROFILE_IMAGE_PATH, fileName);
+    const result = this.profileImageRepository.save(dto);
+
+    promises.rename(tempFilePath, newPath);
+
+    return result;
   }
 
   async getOneUser(findOptions: FindOneOptions<UserEntity>) {
