@@ -1,4 +1,9 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  CopyObjectCommand,
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { extname } from 'path';
@@ -28,13 +33,15 @@ export class AwsService {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Key: `public/images/${folder}/${fileName}`,
       Body: file.buffer,
-      ACL: 'public-read',
+      ACL: 'public-read-write',
       ContentType: `image/${ext}`,
     });
 
     await this.s3Client.send(command);
 
-    return `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_S3_BUCKET_NAME}/public/images/${folder}/${fileName}`;
+    return {
+      fileName,
+    };
   }
 
   async imageUpload(
@@ -45,5 +52,35 @@ export class AwsService {
     const ext = extname(file.originalname).slice(1);
 
     return await this.imageUploadToS3(folder, `${imageName}.${ext}`, file, ext);
+  }
+
+  async moveImage(currentKey: string, newKey: string) {
+    const bucketName = process.env.AWS_S3_BUCKET_NAME;
+
+    const moveResponse = await this.s3Client.send(
+      new CopyObjectCommand({
+        Bucket: bucketName,
+        CopySource: `${bucketName}/${currentKey}`,
+        Key: newKey,
+      }),
+    );
+
+    const deleteResponse = await this.deleteImage(currentKey);
+
+    return {
+      moveResponse,
+      deleteResponse,
+    };
+  }
+
+  async deleteImage(currentKey: string) {
+    const bucketName = process.env.AWS_S3_BUCKET_NAME;
+
+    return await this.s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: bucketName,
+        Key: currentKey,
+      }),
+    );
   }
 }
