@@ -1,8 +1,7 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { extname, join } from 'path';
-import { PROJECT_S3_PATH } from 'src/common/const/path.const';
+import { extname } from 'path';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
@@ -30,24 +29,18 @@ export class AwsService {
       Key: `public/images/${folder}/${fileName}`,
       Body: file.buffer,
       ACL: 'public-read',
-      ContentType: `imeage/${ext}`,
+      ContentType: `image/${ext}`,
     });
 
     await this.s3Client.send(command);
 
-    return join(PROJECT_S3_PATH, folder, fileName);
+    return `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_S3_BUCKET_NAME}/public/images/${folder}/${fileName}`;
   }
 
   async imageUpload(folder: 'post' | 'porfile', file: Express.Multer.File) {
     const imageName = uuid();
-    const ext = extname(file.originalname);
-    const imageUrl = await this.imageUploadToS3(
-      folder,
-      `${imageName}.${ext}`,
-      file,
-      ext,
-    );
+    const ext = extname(file.originalname).slice(1);
 
-    return imageUrl;
+    return await this.imageUploadToS3(folder, `${imageName}.${ext}`, file, ext);
   }
 }
