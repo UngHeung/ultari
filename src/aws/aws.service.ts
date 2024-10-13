@@ -48,6 +48,6 @@ export class AwsService {
       ext,
     );
 
-    return { imageUrl };
+    return imageUrl;
   }
 }
