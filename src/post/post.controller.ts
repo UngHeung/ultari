@@ -26,9 +26,9 @@ import { PostService } from './post.service';
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  @Post('/local')
+  @Post('/')
   @UseGuards(AccessTokenGuard)
-  async createPostLocal(@Req() req, @Body() dto: CreatePostDto) {
+  async createPost(@Req() req, @Body() dto: CreatePostDto) {
     const post = await this.postService.createPost(req.user, dto);
 
     for (let i = 0; i < dto.images.length; i++) {
@@ -49,7 +49,7 @@ export class PostController {
   async uploadImage(
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<{ fileName: string }> {
-    const fileName = await this.postService.saveImage(file);
+    const { fileName } = await this.postService.saveImage(file);
     return { fileName };
   }
 
@@ -62,7 +62,8 @@ export class PostController {
     const fileNames = [];
 
     for (let i = 0; i < files.length; i++) {
-      fileNames.push(await this.postService.saveImage(files[i]));
+      const data = await this.postService.saveImage(files[i]);
+      fileNames.push(data.fileName);
     }
 
     return { fileNames };
