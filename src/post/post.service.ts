@@ -18,6 +18,7 @@ import { PaginatePostDto } from './dto/paginate-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostImageEntity } from './entity/post-image.entity';
 import { PostEntity } from './entity/post.entity';
+import { AwsService } from 'src/aws/aws.service';
 
 @Injectable()
 export class PostService {
@@ -27,6 +28,7 @@ export class PostService {
     @InjectRepository(PostImageEntity)
     private readonly postImageRepository: Repository<PostImageEntity>,
     private readonly commonService: CommonService,
+    private readonly awsService: AwsService,
   ) {}
 
   /**
@@ -242,5 +244,12 @@ export class PostService {
       { ...POST_DEFAULT_FIND_OPTIONS },
       'post',
     );
+  }
+
+  /**
+   *
+   */
+  async saveImage(file: Express.Multer.File) {
+    return await this.awsService.imageUpload('post', file);
   }
 }
