@@ -19,7 +19,7 @@ export class AwsService {
   }
 
   async imageUploadToS3(
-    folder: 'post' | 'porfile',
+    folder: 'post' | 'porfile' | 'temp',
     fileName: string,
     file: Express.Multer.File,
     ext: string,
@@ -37,7 +37,10 @@ export class AwsService {
     return `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_S3_BUCKET_NAME}/public/images/${folder}/${fileName}`;
   }
 
-  async imageUpload(folder: 'post' | 'porfile', file: Express.Multer.File) {
+  async imageUpload(
+    folder: 'post' | 'porfile' | 'temp',
+    file: Express.Multer.File,
+  ) {
     const imageName = uuid();
     const ext = extname(file.originalname).slice(1);
 

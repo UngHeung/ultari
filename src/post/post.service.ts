@@ -250,6 +250,6 @@ export class PostService {
    *
    */
   async saveImage(file: Express.Multer.File) {
-    return await this.awsService.imageUpload('post', file);
+    return await this.awsService.imageUpload('temp', file);
   }
 }
