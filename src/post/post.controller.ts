@@ -46,7 +46,6 @@ export class PostController {
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FileInterceptor('file'))
   uploadImage(@UploadedFile() file?: Express.Multer.File) {
-    console.log('image upload!');
     return this.postService.saveImage(file);
   }
 
