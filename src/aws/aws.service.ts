@@ -18,4 +18,39 @@ export class AwsService {
       },
     });
   }
+
+  async imageUploadToS3(
+    folder: 'post' | 'porfile',
+    fileName: string,
+    file: Express.Multer.File,
+    ext: string,
+  ) {
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: fileName,
+      Body: file.buffer,
+      ACL: 'public-read',
+      ContentType: `imeage/${ext}`,
+    });
+
+    await this.s3Client.send(command);
+
+    return join(PROJECT_S3_PATH, folder, fileName);
+  }
+
+  async imageUpload(folder: 'post' | 'porfile', file: Express.Multer.File) {
+    const imageName = `${uuid()}${extname(file.originalname)}`;
+    console.log('imageName : ', imageName);
+    const ext = extname(file.originalname);
+    console.log('ext : ', ext);
+    const imageUrl = await this.imageUploadToS3(
+      folder,
+      `${imageName}.${ext}`,
+      file,
+      ext,
+    );
+    console.log('imageUrl : ', imageUrl);
+
+    return { imageUrl };
+  }
 }
