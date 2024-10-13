@@ -5,10 +5,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { promises } from 'fs';
-import { basename, join } from 'path';
+import { AwsService } from 'src/aws/aws.service';
 import { CommonService } from 'src/common/common.service';
-import { POST_IMAGE_PATH, TEMP_FOLDER_PATH } from 'src/common/const/path.const';
+import { POST_IMAGE_PATH } from 'src/common/const/path.const';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { Repository } from 'typeorm';
 import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
@@ -27,6 +26,7 @@ export class PostService {
     @InjectRepository(PostImageEntity)
     private readonly postImageRepository: Repository<PostImageEntity>,
     private readonly commonService: CommonService,
+    private readonly awsService: AwsService,
   ) {}
 
   /**
@@ -214,13 +214,13 @@ export class PostService {
   /**
    * @param CreatePostDto
    */
-  createPostImage(dto: CreatePostImageDto) {
-    const tempFilePath = join(TEMP_FOLDER_PATH, dto.path);
-    const fileName = basename(tempFilePath);
-    const newPath = join(POST_IMAGE_PATH, fileName);
+  async createPostImage(dto: CreatePostImageDto) {
+    const currentPath = `public/images/temp/${dto.path}`;
     const result = this.postImageRepository.save(dto);
-
-    promises.rename(tempFilePath, newPath);
+    const response = await this.awsService.moveImage(
+      currentPath,
+      `public/images/post/${dto.path}`,
+    );
 
     return result;
   }
@@ -242,5 +242,12 @@ export class PostService {
       { ...POST_DEFAULT_FIND_OPTIONS },
       'post',
     );
+  }
+
+  /**
+   *
+   */
+  async saveImage(file: Express.Multer.File) {
+    return await this.awsService.imageUpload('temp', file);
   }
 }

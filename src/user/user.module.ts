@@ -4,7 +4,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { CommonModule } from 'src/common/common.module';
-import { PUBLIC_FOLDER_PATH } from 'src/common/const/path.const';
+import { PUBLIC_ROOT_FOLDER_PATH } from 'src/common/const/path.const';
 import { multerModuleOptions } from 'src/common/multer/file-upload.multer';
 import { PostEntity } from 'src/post/entity/post.entity';
 import { TeamEntity } from 'src/team/entity/team.entity';
@@ -18,7 +18,7 @@ import { UserService } from './user.service';
   imports: [
     MulterModule.register(multerModuleOptions),
     ServeStaticModule.forRoot({
-      rootPath: PUBLIC_FOLDER_PATH,
+      rootPath: PUBLIC_ROOT_FOLDER_PATH,
       serveRoot: '/public',
     }),
     TypeOrmModule.forFeature([

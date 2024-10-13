@@ -8,11 +8,12 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { ImageTypeEnum } from 'src/common/enum/image.enum';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -42,10 +43,31 @@ export class PostController {
     return await this.postService.getPostById(post.id);
   }
 
-  @Post('/')
+  @Post('/image')
+  @UseGuards(AccessTokenGuard)
+  @UseInterceptors(FileInterceptor('image'))
+  async uploadImage(
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<{ fileName: string }> {
+    const { fileName } = await this.postService.saveImage(file);
+    return { fileName };
+  }
+
+  @Post('/images')
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FilesInterceptor('images'))
-  uploadImage(@UploadedFiles() files: Express.Multer.File) {}
+  async uploadImages(
+    @UploadedFiles() files?: Express.Multer.File[],
+  ): Promise<{ fileNames: string[] }> {
+    const fileNames = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const data = await this.postService.saveImage(files[i]);
+      fileNames.push(data.fileName);
+    }
+
+    return { fileNames };
+  }
 
   @Get('/')
   getPosts(@Query() query: PaginatePostDto): Promise<{
