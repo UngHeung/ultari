@@ -45,24 +45,27 @@ export class PostController {
 
   @Post('/image')
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FileInterceptor('file'))
-  uploadImage(@UploadedFile() file?: Express.Multer.File) {
-    return { fileName: this.postService.saveImage(file) };
+  @UseInterceptors(FileInterceptor('image'))
+  async uploadImage(
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<{ fileName: string }> {
+    const fileName = await this.postService.saveImage(file);
+    return { fileName };
   }
 
   @Post('/images')
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FilesInterceptor('files'))
-  uploadImages(@UploadedFiles() files?: Express.Multer.File[]) {
-    const result = {
-      fileNames: [],
-    };
+  @UseInterceptors(FilesInterceptor('images'))
+  async uploadImages(
+    @UploadedFiles() files?: Express.Multer.File[],
+  ): Promise<{ fileNames: string[] }> {
+    const fileNames = [];
 
-    for (const file of files) {
-      result.fileNames.push(this.postService.saveImage(file));
+    for (let i = 0; i < files.length; i++) {
+      fileNames.push(await this.postService.saveImage(files[i]));
     }
 
-    return result;
+    return { fileNames };
   }
 
   @Get('/')
