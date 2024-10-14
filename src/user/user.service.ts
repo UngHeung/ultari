@@ -164,9 +164,10 @@ export class UserService {
       user.email = email;
     }
 
-    if (path) {
-      this.awsService.deleteImage(
-        `/public/images/profile/${user.profile.path}`,
+    if (path && user.profile?.path) {
+      this.awsService.moveImage(
+        `public/images/profile/${user.profile.path}`,
+        `public/images/temp/${user.profile.path}`,
       );
 
       user.profile.path = path;
@@ -187,7 +188,7 @@ export class UserService {
   async createProfileImage(dto: CreateProfileImageDto) {
     const currentPath = `public/images/temp/${dto.path}`;
     const result = this.profileImageRepository.save(dto);
-    const response = await this.awsService.moveImage(
+    await this.awsService.moveImage(
       currentPath,
       `public/images/profile/${dto.path}`,
     );
