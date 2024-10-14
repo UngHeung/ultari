@@ -14,6 +14,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { ImageTypeEnum } from 'src/common/enum/image.enum';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -45,9 +46,9 @@ export class PostController {
 
   @Post('/image')
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
   async uploadImage(
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
   ): Promise<{ fileName: string }> {
     const { fileName } = await this.postService.saveImage(file);
     return { fileName };
@@ -55,9 +56,9 @@ export class PostController {
 
   @Post('/images')
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FilesInterceptor('images'))
+  @UseInterceptors(FilesInterceptor('images', 5, { storage: memoryStorage() }))
   async uploadImages(
-    @UploadedFiles() files?: Express.Multer.File[],
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<{ fileNames: string[] }> {
     const fileNames = [];
 
