@@ -1,7 +1,4 @@
-import { Transform } from 'class-transformer';
 import { IsString } from 'class-validator';
-import { join } from 'path';
-import { PROFILE_IMAGE_PATH } from 'src/common/const/path.const';
 import { ImageModel } from 'src/common/entity/image.entity';
 import { Column, Entity, OneToOne } from 'typeorm';
 import { UserEntity } from './user.entity';
@@ -13,6 +10,5 @@ export class ProfileImageEntity extends ImageModel {
 
   @Column()
   @IsString()
-  @Transform(({ value }) => value && `${join(PROFILE_IMAGE_PATH, value)}`)
   path: string;
 }

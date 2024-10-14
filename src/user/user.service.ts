@@ -5,14 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { promises } from 'fs';
-import { basename, join } from 'path';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
+import { AwsService } from 'src/aws/aws.service';
 import { CommonService } from 'src/common/common.service';
-import {
-  PROFILE_IMAGE_PATH,
-  TEMP_FOLDER_PATH,
-} from 'src/common/const/path.const';
 import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
 import { CreateProfileImageDto } from './dto/create-profile-image.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -27,6 +22,7 @@ export class UserService {
     @InjectRepository(ProfileImageEntity)
     private readonly profileImageRepository: Repository<ProfileImageEntity>,
     private readonly commonService: CommonService,
+    private readonly awsService: AwsService,
   ) {}
 
   /**
@@ -80,7 +76,7 @@ export class UserService {
   async getUserWithTeam(id: number) {
     const user = await this.getOneUser({
       where: { id },
-      relations: { team: true, lead: true, subLead: true },
+      relations: { profile: true, team: true, lead: true, subLead: true },
     });
     Logger.log(user);
 
@@ -90,7 +86,7 @@ export class UserService {
   async getUserWithPosts(id: number) {
     const user = await this.getOneUser({
       where: { id },
-      relations: { posts: true, likedPosts: true },
+      relations: { profile: true, posts: true, likedPosts: true },
     });
 
     return user;
@@ -100,6 +96,7 @@ export class UserService {
     const user = await this.getOneUser({
       where: { id },
       relations: {
+        profile: true,
         team: true,
         lead: true,
         subLead: true,
@@ -141,7 +138,7 @@ export class UserService {
     user: UserEntity,
     updateUserDto: UpdateUserDto,
   ): Promise<UserEntity> {
-    const { phone, email, community, profile }: UpdateUserDto = updateUserDto;
+    const { phone, email, community, path }: UpdateUserDto = updateUserDto;
 
     if (phone && user.phone !== phone) {
       const userPhoneExists = await this.userRepository.findOne({
@@ -167,12 +164,12 @@ export class UserService {
       user.email = email;
     }
 
-    if (profile) {
-      if (user.profile.path.length > 0) {
-        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profile.path);
-      }
+    if (path) {
+      this.awsService.deleteImage(
+        `/public/images/profile/${user.profile.path}`,
+      );
 
-      user.profile = profile;
+      user.profile.path = path;
     }
 
     if (community) {
@@ -184,17 +181,23 @@ export class UserService {
     return user;
   }
 
-  createProfileImage(dto: CreateProfileImageDto) {
-    const tempFilePath = join(TEMP_FOLDER_PATH, dto.path);
-    const fileName = basename(tempFilePath);
-    const newPath = join(PROFILE_IMAGE_PATH, fileName);
+  /**
+   *
+   */
+  async createProfileImage(dto: CreateProfileImageDto) {
+    const currentPath = `public/images/temp/${dto.path}`;
     const result = this.profileImageRepository.save(dto);
-
-    promises.rename(tempFilePath, newPath);
+    const response = await this.awsService.moveImage(
+      currentPath,
+      `public/images/profile/${dto.path}`,
+    );
 
     return result;
   }
 
+  /**
+   *
+   */
   async getOneUser(findOptions: FindOneOptions<UserEntity>) {
     const user = await this.userRepository.findOne(findOptions);
 
@@ -205,6 +208,9 @@ export class UserService {
     return user;
   }
 
+  /**
+   *
+   */
   async getManyUsers(findOptions?: FindManyOptions<UserEntity>) {
     const users = await this.userRepository.find(findOptions ?? null);
 
@@ -213,5 +219,12 @@ export class UserService {
     }
 
     return users;
+  }
+
+  /**
+   *
+   */
+  async saveImage(file: Express.Multer.File) {
+    return await this.awsService.imageUpload('temp', file);
   }
 }
