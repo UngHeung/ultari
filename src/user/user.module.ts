@@ -13,6 +13,7 @@ import { ProfileImageEntity } from './entity/profile-image.entity';
 import { UserEntity } from './entity/user.entity';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { AwsModule } from 'src/aws/aws.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UserService } from './user.service';
     forwardRef(() => AuthModule),
     TeamModule,
     CommonModule,
+    AwsModule,
   ],
   exports: [UserService],
   controllers: [UserController],
