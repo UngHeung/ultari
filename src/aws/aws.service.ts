@@ -4,7 +4,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { extname } from 'path';
 import { v4 as uuid } from 'uuid';
@@ -29,19 +29,25 @@ export class AwsService {
     file: Express.Multer.File,
     ext: string,
   ) {
+    console.log('file : ', file);
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Key: `public/images/${folder}/${fileName}`,
       Body: file.buffer,
       ACL: 'public-read-write',
+
       ContentType: `image/${ext}`,
     });
 
-    await this.s3Client.send(command);
+    try {
+      await this.s3Client.send(command);
 
-    return {
-      fileName,
-    };
+      return {
+        fileName,
+      };
+    } catch (error) {
+      throw new BadRequestException('잘못된 요청입니다.');
+    }
   }
 
   async imageUpload(
