@@ -18,7 +18,6 @@ async function bootstrap() {
     }),
   );
   app.setGlobalPrefix('api');
-  app.useStaticAssets('public', { prefix: '/public/' });
   app.enableCors({
     origin: [
       'https://ultari.xyz',
