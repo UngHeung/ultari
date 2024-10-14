@@ -1,8 +1,8 @@
-import { ImageTypeEnum } from 'src/common/enum/image.enum';
-import { UserEntity } from '../entity/user.entity';
+import { PickType } from '@nestjs/mapped-types';
+import { ProfileImageEntity } from '../entity/profile-image.entity';
 
-export class CreateProfileImageDto {
-  user: UserEntity;
-  path: string;
-  type: ImageTypeEnum = ImageTypeEnum.PROFILE_IMAGE;
-}
+export class CreateProfileImageDto extends PickType(ProfileImageEntity, [
+  'user',
+  'path',
+  'type',
+]) {}
