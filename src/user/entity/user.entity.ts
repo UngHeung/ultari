@@ -57,7 +57,7 @@ export class UserEntity extends BaseModel {
   community?: string;
 
   @IsOptional()
-  @OneToOne(() => ProfileImageEntity, profile => profile.user)
+  @OneToOne(() => ProfileImageEntity, profile => profile.user, { eager: true })
   @JoinColumn()
   profile?: ProfileImageEntity;
 
