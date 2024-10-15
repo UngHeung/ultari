@@ -110,7 +110,7 @@ export class PostController {
 
   @Delete('/:id')
   @UseGuards(AccessTokenGuard)
-  deletePost(@Req() req, @Param('id') id: number): Promise<number> {
+  deletePost(@Req() req, @Param('id') id: number): Promise<boolean> {
     return this.postService.deletePost(req.user, id);
   }
 }

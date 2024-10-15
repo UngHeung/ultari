@@ -184,7 +184,7 @@ export class PostService {
    * delete post by post id
    * delete images files in folder
    */
-  async deletePost(user: UserEntity, id: number): Promise<number> {
+  async deletePost(user: UserEntity, id: number): Promise<boolean> {
     const post: PostEntity & { images?: PostImageEntity[] } =
       await this.postRepository.findOne({
         where: {
@@ -204,11 +204,16 @@ export class PostService {
       throw new NotFoundException(`삭제할 게시물이 없습니다. id : ${id}`);
     }
 
-    for (let i = 0; i < post.images.length; i++) {
-      this.commonService.removeFile(POST_IMAGE_PATH, post.images[i].path);
+    if (post.images.length > 0) {
+      for (let i = 0; i < post.images.length; i++) {
+        await this.awsService.moveImage(
+          `public/images/post/${post.images[i].path}`,
+          `public/images/temp/${post.images[i].path}`,
+        );
+      }
     }
 
-    return id;
+    return true;
   }
 
   /**
@@ -217,7 +222,7 @@ export class PostService {
   async createPostImage(dto: CreatePostImageDto) {
     const currentPath = `public/images/temp/${dto.path}`;
     const result = this.postImageRepository.save(dto);
-    const response = await this.awsService.moveImage(
+    await this.awsService.moveImage(
       currentPath,
       `public/images/post/${dto.path}`,
     );
