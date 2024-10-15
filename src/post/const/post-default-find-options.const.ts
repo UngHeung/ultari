@@ -3,7 +3,9 @@ import { PostEntity } from '../entity/post.entity';
 
 export const POST_DEFAULT_FIND_OPTIONS: FindManyOptions<PostEntity> = {
   relations: {
-    author: true,
+    author: {
+      profile: true,
+    },
     images: true,
     likers: true,
   },
