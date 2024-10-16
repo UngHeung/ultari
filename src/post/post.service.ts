@@ -88,7 +88,7 @@ export class PostService {
 
     dto.title && (post.title = dto.title);
     dto.content && (post.content = dto.content);
-    dto.images && (post.images = dto.images);
+    dto.images.length > 0 && (post.images = dto.images);
     dto.visibility && (post.visibility = dto.visibility);
     dto.contentType && (post.contentType = dto.contentType);
 
