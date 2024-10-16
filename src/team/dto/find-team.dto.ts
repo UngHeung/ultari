@@ -1,11 +1,15 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class FindTeamDto {
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  where__name__i_like?: string;
+  id: number;
 
   @IsString()
   @IsOptional()
-  where__community__i_like?: string;
+  keyword: string;
+
+  @IsString()
+  @IsOptional()
+  type: 'name' | 'community' | 'id';
 }

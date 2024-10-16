@@ -1,12 +1,15 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { FindOneOptions, Repository } from 'typeorm';
+import { FindOneOptions, Like, Repository } from 'typeorm';
 import { CreateTeamDto } from './dto/create-team.dto';
+import { FindTeamDto } from './dto/find-team.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
 import { TeamEntity } from './entity/team.entity';
 
@@ -19,6 +22,9 @@ export class TeamService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
+  /**
+   *
+   */
   async createTeam(user: Omit<UserEntity, 'password'>, dto: CreateTeamDto) {
     const team = this.teamRepository.create({
       leader: user,
@@ -33,6 +39,9 @@ export class TeamService {
     return newTeam;
   }
 
+  /**
+   *
+   */
   async getTeamById(id: number) {
     const findOptions: FindOneOptions<TeamEntity> = {
       where: { id },
@@ -52,6 +61,9 @@ export class TeamService {
     return team;
   }
 
+  /**
+   *
+   */
   async getTeamListAll() {
     const findOptions: FindOneOptions<TeamEntity> = {
       relations: {
@@ -63,6 +75,32 @@ export class TeamService {
     return teamList;
   }
 
+  /**
+   *
+   */
+  async findTeamList(dto: FindTeamDto) {
+    console.log('dto : ', dto);
+
+    const findOption: FindOneOptions<TeamEntity> = {
+      relations: {
+        leader: true,
+      },
+      where:
+        dto.type === 'community'
+          ? { community: Like(`%${dto.keyword}%`) }
+          : dto.type === 'id'
+            ? { id: dto.id }
+            : { name: Like(`%${dto.keyword}%`) },
+    };
+
+    const findTeamList = this.getTeamList(findOption);
+
+    return findTeamList;
+  }
+
+  /**
+   *
+   */
   async changeLeader(dto: UpdateLeaderDto) {
     const team = await this.teamRepository.findOneBy({ id: dto.teamId });
 
@@ -77,6 +115,9 @@ export class TeamService {
     return team.leader;
   }
 
+  /**
+   *
+   */
   async changeSubLeader(applicant: UserEntity, dto: UpdateLeaderDto) {
     const teamFindOption: FindOneOptions<TeamEntity> = {
       where: {
@@ -124,6 +165,9 @@ export class TeamService {
     return team;
   }
 
+  /**
+   *
+   */
   async addMember(leader: UserEntity, dto: { teamId: number; userId: number }) {
     const team = await this.teamRepository.findOne({
       where: { id: dto.teamId },
@@ -138,13 +182,13 @@ export class TeamService {
     }
 
     if (this.findTeamMember(team.member, dto.userId)) {
-      throw new BadRequestException('이미 가입된 사용자입니다.');
+      throw new ConflictException('이미 가입된 사용자입니다.');
     }
 
     const user = await this.userRepository.findOneBy({ id: dto.userId });
 
     if (user.team) {
-      throw new BadRequestException('이미 가입된 목장이 있는 사용자입니다.');
+      throw new ConflictException('이미 가입된 목장이 있는 사용자입니다.');
     }
 
     team.member = [...team.member, user];
@@ -152,15 +196,62 @@ export class TeamService {
     return team.member;
   }
 
+  /**
+   *
+   */
   findTeamMember(team: UserEntity[], userId: number) {
     const result = team.filter(member => member.id === userId).length;
     return result ? true : false;
   }
 
+  /**
+   *
+   */
+  async deleteTeam(user: UserEntity, teamId: number) {
+    console.log('user : ', user);
+    console.log('teamId : ', teamId);
+    const team = await this.teamRepository.findOne({
+      where: {
+        id: teamId,
+      },
+      relations: {
+        leader: true,
+      },
+    });
+
+    console.log('team : ', team);
+
+    console.log(user.id, team.leader.id);
+
+    if (!user) {
+      throw new NotFoundException('권한이 없습니다.');
+    }
+
+    if (!team) {
+      throw new NotFoundException('팀이 존재하지 않습니다.');
+    }
+
+    if (user.id !== team.leader.id) {
+      throw new BadRequestException('권한이 없습니다. 팀 리더가 아닙니다.');
+    }
+
+    const response = await this.teamRepository.delete(team);
+
+    console.log(response);
+
+    return true;
+  }
+
+  /**
+   *
+   */
   async getTeam(findOption: FindOneOptions<TeamEntity>) {
     return await this.teamRepository.findOne({ ...findOption });
   }
 
+  /**
+   *
+   */
   async getTeamList(findOption?: FindOneOptions<TeamEntity>) {
     return await this.teamRepository.find({ ...findOption });
   }
