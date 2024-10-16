@@ -6,11 +6,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { CreateTeamDto } from './dto/create-team.dto';
+import { FindTeamDto } from './dto/find-team.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
 import { TeamService } from './team.service';
 
@@ -24,10 +26,10 @@ export class TeamController {
     return this.teamService.createTeam(req.user, dto);
   }
 
-  @Get('/:id')
+  @Get('/find')
   @UseGuards(AccessTokenGuard)
-  getTeamById(@Param('id') id: number) {
-    return this.teamService.getTeamById(id);
+  findTeam(@Query() query: FindTeamDto) {
+    return this.teamService.findTeamList(query);
   }
 
   @Get('/')
@@ -58,6 +60,9 @@ export class TeamController {
   @UseGuards(AccessTokenGuard)
   deleteMember() {}
 
-  @Delete('/')
-  deleteTeam() {}
+  @Delete('/:id')
+  @UseGuards(AccessTokenGuard)
+  deleteTeam(@Req() req, @Param('id') id: number) {
+    return this.teamService.deleteTeam(req.user, id);
+  }
 }
