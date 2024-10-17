@@ -1,5 +1,11 @@
 import { Exclude } from 'class-transformer';
-import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { emailValidationMessage } from 'src/common/validator/message/email-validation.message';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
@@ -57,7 +63,11 @@ export class UserEntity extends BaseModel {
   community?: string;
 
   @IsOptional()
-  @OneToOne(() => ProfileImageEntity, profile => profile.user, { eager: true })
+  @OneToOne(() => ProfileImageEntity, profile => profile.user, {
+    eager: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   profile?: ProfileImageEntity;
 
@@ -83,4 +93,16 @@ export class UserEntity extends BaseModel {
   @OneToOne(() => TeamEntity, team => team.subLeader)
   @JoinColumn()
   subLead: TeamEntity;
+
+  @Column()
+  @IsBoolean()
+  isLoggedIn: boolean;
+
+  @Column()
+  @IsBoolean()
+  isLeaderOrSubLeader: boolean;
+
+  @Column()
+  @IsBoolean()
+  hasTeam: boolean;
 }
