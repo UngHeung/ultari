@@ -5,7 +5,7 @@ import { UserEntity } from './user.entity';
 
 @Entity()
 export class ProfileImageEntity extends ImageModel {
-  @OneToOne(() => UserEntity, user => user.profile, { onDelete: 'CASCADE' })
+  @OneToOne(() => UserEntity, user => user.profile)
   user: UserEntity;
 
   @Column()
