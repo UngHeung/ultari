@@ -3,17 +3,17 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
-import { CommonModule } from 'src/common/common.module';
+import { AwsModule } from 'src/aws/aws.module';
 import { PUBLIC_ROOT_FOLDER_PATH } from 'src/common/const/path.const';
 import { multerModuleOptions } from 'src/common/multer/file-upload.multer';
 import { PostEntity } from 'src/post/entity/post.entity';
 import { TeamEntity } from 'src/team/entity/team.entity';
 import { TeamModule } from 'src/team/team.module';
+import { TeamService } from 'src/team/team.service';
 import { ProfileImageEntity } from './entity/profile-image.entity';
 import { UserEntity } from './entity/user.entity';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { AwsModule } from 'src/aws/aws.module';
 
 @Module({
   imports: [
@@ -24,17 +24,16 @@ import { AwsModule } from 'src/aws/aws.module';
     }),
     TypeOrmModule.forFeature([
       UserEntity,
-      PostEntity,
-      TeamEntity,
       ProfileImageEntity,
+      TeamEntity,
+      PostEntity,
     ]),
     forwardRef(() => AuthModule),
-    TeamModule,
-    CommonModule,
+    forwardRef(() => TeamModule),
     AwsModule,
   ],
   exports: [UserService],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, TeamService],
 })
 export class UserModule {}
