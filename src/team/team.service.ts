@@ -58,6 +58,23 @@ export class TeamService {
 
   /**
    * # GET
+   * get team and team data
+   */
+  async getTeamAndTeamData(
+    user: UserEntity,
+    teamId: number,
+  ): Promise<TeamEntity> {
+    const team = await this.getTeam({ where: { id: teamId } });
+
+    if (!this.existsMember(team.member, user.id)) {
+      throw new UnauthorizedException('권한이 없습니다.');
+    }
+
+    return team;
+  }
+
+  /**
+   * # GET
    * find team by keywords (name, community)
    */
   async findTeamList(dto: FindTeamDto) {
@@ -140,7 +157,7 @@ export class TeamService {
 
   /**
    * # Patch
-   * join team
+   * sign team
    */
   async signMember(
     leader: UserEntity,
@@ -171,6 +188,10 @@ export class TeamService {
     return team;
   }
 
+  /**
+   * # PATCH
+   * unsign member
+   */
   async unsignMember(
     leader: UserEntity,
     dto: { teamId: number; userId: number },
@@ -225,7 +246,7 @@ export class TeamService {
    * find team all
    */
   async getTeamAll(): Promise<TeamEntity[]> {
-    return await this.teamRepository.find();
+    return await this.teamRepository.find({ relations: { leader: true } });
   }
 
   /**
@@ -244,7 +265,7 @@ export class TeamService {
       throw new NotFoundException('팀을 찾을 수 없습니다.');
     }
 
-    return;
+    return team;
   }
 
   /**
@@ -274,6 +295,7 @@ export class TeamService {
    */
   existsMember(team: UserEntity[], userId: number): boolean {
     const findMember = team.filter(member => member.id === userId).length;
+    console.log(findMember);
     return findMember ? true : false;
   }
 
