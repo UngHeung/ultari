@@ -3,11 +3,12 @@ import {
   IsBoolean,
   IsEmail,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   Length,
 } from 'class-validator';
 import { BaseModel } from 'src/common/entity/base.entity';
-import { emailValidationMessage } from 'src/common/validator/message/email-validation.message';
+import { formValidationMessage } from 'src/common/validator/message/form-validation.message';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { stringValidationMessage } from 'src/common/validator/message/type-validation.message';
 import { PostEntity } from 'src/post/entity/post.entity';
@@ -51,11 +52,12 @@ export class UserEntity extends BaseModel {
   @Column({ unique: true, nullable: false })
   @IsString({ message: stringValidationMessage })
   @Length(12, 13, { message: lengthValidationMessage })
+  @IsPhoneNumber('KR', { message: formValidationMessage })
   phone: string;
 
   @Column({ unique: true, nullable: false })
   @IsString({ message: stringValidationMessage })
-  @IsEmail({}, { message: emailValidationMessage })
+  @IsEmail({}, { message: formValidationMessage })
   email: string;
 
   @Column({ nullable: false })
