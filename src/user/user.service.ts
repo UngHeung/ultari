@@ -54,10 +54,14 @@ export class UserService {
     teamId: number,
   ): Promise<UserEntity> {
     const team = await this.teamService.getTeamById(teamId);
-    const user = await this.getUserData(userId);
+    const user = await this.getUserDataAndApplyTeam(userId);
 
     if (this.teamService.existsMember(team.member, userId)) {
       throw new BadRequestException('이미 가입된 사용자입니다.');
+    }
+
+    if (user.applyTeam && user.applyTeam.id === team.id) {
+      throw new BadRequestException('이미 신청중인 사용자입니다.');
     }
 
     user.applyTeam = team;
@@ -71,6 +75,17 @@ export class UserService {
    */
   async getUserData(id: number): Promise<UserEntity> {
     return await this.getUser({ where: { id } });
+  }
+
+  /**
+   * # GET
+   * get user data
+   */
+  async getUserDataAndApplyTeam(id: number): Promise<UserEntity> {
+    return await this.getUser({
+      where: { id },
+      relations: { applyTeam: true, profile: true },
+    });
   }
 
   /**
