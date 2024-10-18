@@ -32,35 +32,42 @@ export enum RoleEnum {
 
 @Entity()
 export class UserEntity extends BaseModel {
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   @IsString({ message: stringValidationMessage })
   @Length(6, 15, { message: lengthValidationMessage })
   account: string;
 
-  @Column()
+  @Column({ nullable: false })
   @IsString({ message: stringValidationMessage })
   @Length(8, 20, { message: lengthValidationMessage })
   @Exclude({ toPlainOnly: true })
   password: string;
 
-  @Column()
+  @Column({ nullable: false })
   @IsString({ message: stringValidationMessage })
   @Length(2, 10, { message: lengthValidationMessage })
   name: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   @IsString({ message: stringValidationMessage })
   @Length(12, 13, { message: lengthValidationMessage })
   phone: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   @IsString({ message: stringValidationMessage })
   @IsEmail({}, { message: emailValidationMessage })
   email: string;
 
-  @Column()
+  @Column({ nullable: false })
   @IsString({ message: stringValidationMessage })
-  community?: string;
+  community: string;
+
+  @Column({
+    enum: Object.values(RoleEnum),
+    nullable: false,
+    default: RoleEnum.USER,
+  })
+  role: string;
 
   @IsOptional()
   @OneToOne(() => ProfileImageEntity, profile => profile.user, {
@@ -71,12 +78,6 @@ export class UserEntity extends BaseModel {
   @JoinColumn()
   profile?: ProfileImageEntity;
 
-  @Column({
-    enum: Object.values(RoleEnum),
-    default: RoleEnum.USER,
-  })
-  role: string;
-
   @OneToMany(() => PostEntity, post => post.author)
   posts: PostEntity[];
 
@@ -86,23 +87,31 @@ export class UserEntity extends BaseModel {
   @ManyToOne(() => TeamEntity, team => team.member)
   team: TeamEntity;
 
-  @OneToOne(() => TeamEntity, team => team.leader)
+  @OneToOne(() => TeamEntity, team => team.leader, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   lead: TeamEntity;
 
-  @OneToOne(() => TeamEntity, team => team.subLeader)
+  @OneToOne(() => TeamEntity, team => team.subLeader, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   subLead: TeamEntity;
 
-  @Column()
+  @Column({ nullable: false, default: false })
   @IsBoolean()
   isLoggedIn: boolean;
 
-  @Column()
+  @Column({ nullable: false, default: false })
   @IsBoolean()
   isLeaderOrSubLeader: boolean;
 
-  @Column()
+  @Column({ nullable: false, default: false })
   @IsBoolean()
   hasTeam: boolean;
 }
