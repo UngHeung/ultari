@@ -6,13 +6,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { nanoid } from 'nanoid';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { FindOneOptions, Like, Repository } from 'typeorm';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { FindTeamDto } from './dto/find-team.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
 import { TeamEntity } from './entity/team.entity';
-import { nanoid } from 'nanoid';
 
 @Injectable()
 export class TeamService {
