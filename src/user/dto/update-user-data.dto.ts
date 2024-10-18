@@ -8,5 +8,5 @@ export class UpdateUserDataDto extends PickType(UserEntity, [
   'community',
 ]) {
   @IsOptional()
-  newProfilePath?: string;
+  profilePath?: string;
 }

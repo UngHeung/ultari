@@ -189,16 +189,16 @@ export class UserService {
     user.email = dto.email;
     user.community = dto.community;
 
-    if (dto.newProfilePath) {
+    if (dto.profilePath) {
       if (user.profile) {
         await this.awsService.moveImage(
           `public/images/profile/${user.profile.path}`,
           `public/images/temp/${user.profile.path}`,
         );
 
-        user.profile.path = dto.newProfilePath;
+        user.profile.path = dto.profilePath;
       } else {
-        const profile = this.createUserProfile(user, dto.newProfilePath);
+        const profile = this.createUserProfile(user, dto.profilePath);
 
         user.profile = profile;
       }
