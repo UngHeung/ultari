@@ -1,17 +1,19 @@
 import {
   BadRequestException,
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthLoginDto } from 'src/auth/dto/auth-login.dto';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
 import { AwsService } from 'src/aws/aws.service';
-import { CommonService } from 'src/common/common.service';
 import { ImageTypeEnum } from 'src/common/enum/image.enum';
+import { TeamService } from 'src/team/team.service';
 import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
 import { UpdateUserDataDto } from './dto/update-user-data.dto';
-import { UpdateUserTeamDto } from './dto/update-user-team.dto';
 import { ProfileImageEntity } from './entity/profile-image.entity';
 import { UserEntity } from './entity/user.entity';
 
@@ -22,7 +24,8 @@ export class UserService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(ProfileImageEntity)
     private readonly profileImageRepository: Repository<ProfileImageEntity>,
-    private readonly commonService: CommonService,
+    @Inject(forwardRef(() => TeamService))
+    private readonly teamService: TeamService,
     private readonly awsService: AwsService,
   ) {}
 
@@ -43,6 +46,30 @@ export class UserService {
   }
 
   /**
+   * # POST
+   * add join team applicant
+   */
+  async addJoinTeamApplicant(
+    userId: number,
+    teamId: number,
+  ): Promise<UserEntity> {
+    const team = await this.teamService.getTeamById(teamId);
+    const user = await this.getUserDataAndApplyTeam(userId);
+
+    if (this.teamService.existsMember(team.member, userId)) {
+      throw new BadRequestException('이미 가입된 사용자입니다.');
+    }
+
+    if (user.applyTeam && user.applyTeam.id === team.id) {
+      throw new BadRequestException('이미 신청중인 사용자입니다.');
+    }
+
+    user.applyTeam = team;
+
+    return await this.userRepository.save(user);
+  }
+
+  /**
    * # GET
    * get my user data
    */
@@ -52,12 +79,23 @@ export class UserService {
 
   /**
    * # GET
+   * get user data
+   */
+  async getUserDataAndApplyTeam(id: number): Promise<UserEntity> {
+    return await this.getUser({
+      where: { id },
+      relations: { applyTeam: true, profile: true },
+    });
+  }
+
+  /**
+   * # GET
    * get user and users team.
    */
   async getUserDataAndTeam(id: number): Promise<UserEntity> {
     return await this.getUser({
       where: { id },
-      relations: { team: true },
+      relations: { profile: true, team: true },
     });
   }
 
@@ -68,8 +106,26 @@ export class UserService {
   async getUserDataAndPosts(id: number): Promise<UserEntity> {
     return await this.getUser({
       where: { id },
-      relations: { posts: true },
+      relations: { profile: true, posts: true },
     });
+  }
+
+  /**
+   * # DELETE
+   * delete applyTeam
+   */
+  async deleteApplyTeam(userId, deleteUserid: number): Promise<UserEntity> {
+    const user = await this.getUserData(userId);
+    const targetUser = await this.getUserData(deleteUserid);
+
+    if (!(user.team.id === targetUser.applyTeam.id)) {
+      throw new UnauthorizedException('권한이 없습니다.');
+    }
+
+    user.applyTeam = null;
+    this.userRepository.save(targetUser);
+
+    return user;
   }
 
   /**
@@ -125,7 +181,9 @@ export class UserService {
    * find all users
    */
   async getUsersAll(): Promise<UserEntity[]> {
-    const users = await this.getManyUsers({ relations: { team: true } });
+    const users = await this.getManyUsers({
+      // relations: { profile: true },
+    });
 
     users.map(user => delete user.password);
 
@@ -140,8 +198,8 @@ export class UserService {
     findOneOptions: FindOneOptions<UserEntity>,
   ): Promise<UserEntity> {
     const user = await this.userRepository.findOne({
-      ...findOneOptions,
       relations: { profile: true },
+      ...findOneOptions,
     });
 
     delete user.password;
@@ -157,9 +215,9 @@ export class UserService {
     findManyOptions: FindManyOptions<UserEntity>,
   ): Promise<UserEntity[]> {
     return await this.userRepository.find({
-      ...findManyOptions,
       relations: { profile: true },
       select: { password: false },
+      ...findManyOptions,
     });
   }
 

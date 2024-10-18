@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -20,6 +22,7 @@ export class TeamService {
   constructor(
     @InjectRepository(TeamEntity)
     private readonly teamRepository: Repository<TeamEntity>,
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
   ) {}
 
@@ -46,30 +49,6 @@ export class TeamService {
     const newTeam = await this.teamRepository.save(team);
 
     return newTeam;
-  }
-
-  /**
-   * # POST
-   * add join team applicant
-   */
-  async addJoinTeamApplicant(
-    userId: number,
-    teamId: number,
-  ): Promise<TeamEntity> {
-    const user = await this.userService.getUserData(userId);
-    const team = await this.getTeamById(teamId);
-
-    if (await this.existsMember(team.member, user.id)) {
-      throw new BadRequestException('이미 가입된 사용자입니다.');
-    }
-
-    if (!team.applicants) {
-      team.applicants = [user];
-    } else {
-      team.applicants = [...team.applicants, user];
-    }
-
-    return await this.teamRepository.save(team);
   }
 
   /**
@@ -111,6 +90,18 @@ export class TeamService {
 
   /**
    * # GET
+   * get team and join team applicant list
+   */
+  async getTeamAndJoinTeamApplicantList(id: number): Promise<TeamEntity> {
+    return await this.getTeam({
+      where: { id },
+      relations: { leader: true, applicants: true },
+    });
+  }
+
+  /**
+   * # GET
+   * get team by id
    */
   async getTeamById(id: number) {
     const team = await this.getTeam({ where: { id } });
@@ -150,7 +141,7 @@ export class TeamService {
   ): Promise<TeamEntity> {
     const team = await this.getTeam({
       where: { id: dto.teamId },
-      relations: { subLeader: true },
+      relations: { leader: true, subLeader: true },
     });
 
     if (!team) {
@@ -254,6 +245,14 @@ export class TeamService {
   async deleteTeam(user: UserEntity, teamId: number): Promise<boolean> {
     const team = await this.getTeam({ where: { id: teamId } });
 
+    if (team.member.length > 0) {
+      throw new BadRequestException('팀원이 존재합니다.');
+    }
+
+    if (team.applicants.length > 0) {
+      throw new BadRequestException('신청자가 존재합니다.');
+    }
+
     if (!user) {
       throw new BadRequestException('잘못된 요청입니다.');
     }
@@ -287,8 +286,8 @@ export class TeamService {
     findOneOptions: FindOneOptions<TeamEntity>,
   ): Promise<TeamEntity> {
     const team = await this.teamRepository.findOne({
-      ...findOneOptions,
       relations: { leader: true, member: true },
+      ...findOneOptions,
     });
 
     if (!team) {
@@ -306,8 +305,8 @@ export class TeamService {
     findOption?: FindOneOptions<TeamEntity>,
   ): Promise<TeamEntity[]> {
     return await this.teamRepository.find({
-      ...findOption,
       relations: { leader: true },
+      ...findOption,
     });
   }
 

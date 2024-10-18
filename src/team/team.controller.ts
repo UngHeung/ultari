@@ -14,8 +14,8 @@ import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { FindTeamDto } from './dto/find-team.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
-import { TeamService } from './team.service';
 import { TeamEntity } from './entity/team.entity';
+import { TeamService } from './team.service';
 
 @Controller('team')
 export class TeamController {
@@ -25,15 +25,6 @@ export class TeamController {
   @UseGuards(AccessTokenGuard)
   createTeam(@Req() req, @Body() dto: CreateTeamDto): Promise<TeamEntity> {
     return this.teamService.createTeam(req.user, dto);
-  }
-
-  @Post('/join')
-  @UseGuards(AccessTokenGuard)
-  addApplicants(
-    @Req() req,
-    @Body() dto: { teamId: number },
-  ): Promise<TeamEntity> {
-    return this.teamService.addJoinTeamApplicant(req.user.id, dto.teamId);
   }
 
   @Get('/find')
@@ -50,6 +41,11 @@ export class TeamController {
   @Get('/')
   getTeamListAll(): Promise<TeamEntity[]> {
     return this.teamService.getTeamAll();
+  }
+
+  @Get('/team/applicant/:id')
+  getApplicantList(@Query('id') id: number): Promise<TeamEntity> {
+    return this.teamService.getTeamAndJoinTeamApplicantList(id);
   }
 
   @Patch('/leader')
