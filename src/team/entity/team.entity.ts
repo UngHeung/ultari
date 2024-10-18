@@ -24,6 +24,9 @@ export class TeamEntity extends BaseModel {
   @OneToMany(() => UserEntity, user => user.team)
   member: UserEntity[];
 
+  @OneToMany(() => UserEntity, user => user.applyTeam)
+  applicants?: UserEntity[];
+
   @OneToOne(() => UserEntity, user => user.lead, {
     nullable: false,
     cascade: true,

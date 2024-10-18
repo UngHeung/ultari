@@ -1,6 +1,5 @@
 import { Exclude } from 'class-transformer';
 import {
-  IsBoolean,
   IsEmail,
   IsOptional,
   IsPhoneNumber,
@@ -94,4 +93,7 @@ export class UserEntity extends BaseModel {
 
   @OneToOne(() => TeamEntity, team => team.subLeader)
   subLead: TeamEntity;
+
+  @ManyToOne(() => TeamEntity, team => team.applicants)
+  applyTeam: TeamEntity;
 }
