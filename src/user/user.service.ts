@@ -87,9 +87,6 @@ export class UserService {
   async registUser(dto: AuthSignUpDto): Promise<UserEntity> {
     const user = this.userRepository.create({
       ...dto,
-      isLoggedIn: false,
-      isLeaderOrSubLeader: false,
-      hasTeam: false,
     });
 
     this.registUserValidator(dto);
