@@ -89,31 +89,9 @@ export class UserEntity extends BaseModel {
   @ManyToOne(() => TeamEntity, team => team.member)
   team: TeamEntity;
 
-  @OneToOne(() => TeamEntity, team => team.leader, {
-    nullable: true,
-    cascade: true,
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn()
+  @OneToOne(() => TeamEntity, team => team.leader)
   lead: TeamEntity;
 
-  @OneToOne(() => TeamEntity, team => team.subLeader, {
-    nullable: true,
-    cascade: true,
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn()
+  @OneToOne(() => TeamEntity, team => team.subLeader)
   subLead: TeamEntity;
-
-  @Column({ nullable: false, default: false })
-  @IsBoolean()
-  isLoggedIn: boolean;
-
-  @Column({ nullable: false, default: false })
-  @IsBoolean()
-  isLeaderOrSubLeader: boolean;
-
-  @Column({ nullable: false, default: false })
-  @IsBoolean()
-  hasTeam: boolean;
 }
