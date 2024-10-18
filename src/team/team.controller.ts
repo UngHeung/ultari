@@ -35,7 +35,7 @@ export class TeamController {
   @Get('/')
   @UseGuards(AccessTokenGuard)
   getTeamListAll() {
-    return this.teamService.getTeamListAll();
+    return this.teamService.getTeamAll();
   }
 
   @Patch('/leader')
