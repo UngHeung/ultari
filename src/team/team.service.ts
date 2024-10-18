@@ -49,6 +49,30 @@ export class TeamService {
   }
 
   /**
+   * # POST
+   * add join team applicant
+   */
+  async addJoinTeamApplicant(
+    userId: number,
+    teamId: number,
+  ): Promise<TeamEntity> {
+    const user = await this.userService.getUserData(userId);
+    const team = await this.getTeamById(teamId);
+
+    if (await this.existsMember(team.member, user.id)) {
+      throw new BadRequestException('이미 가입된 사용자입니다.');
+    }
+
+    if (!team.applicants) {
+      team.applicants = [user];
+    } else {
+      team.applicants = [...team.applicants, user];
+    }
+
+    return await this.teamRepository.save(team);
+  }
+
+  /**
    * # GET
    * find team by team code
    */
@@ -60,15 +84,8 @@ export class TeamService {
    * # GET
    * get team and team data
    */
-  async getTeamAndTeamData(
-    user: UserEntity,
-    teamId: number,
-  ): Promise<TeamEntity> {
+  async getTeamAndTeamData(teamId: number): Promise<TeamEntity> {
     const team = await this.getTeam({ where: { id: teamId } });
-
-    if (!this.existsMember(team.member, user.id)) {
-      throw new UnauthorizedException('권한이 없습니다.');
-    }
 
     return team;
   }
@@ -90,6 +107,19 @@ export class TeamService {
     const findTeamList = this.getTeamList(findOption);
 
     return findTeamList;
+  }
+
+  /**
+   * # GET
+   */
+  async getTeamById(id: number) {
+    const team = await this.getTeam({ where: { id } });
+
+    if (!team) {
+      throw new NotFoundException('팀을 찾을 수 없습니다.');
+    }
+
+    return team;
   }
 
   /**
@@ -295,7 +325,6 @@ export class TeamService {
    */
   existsMember(team: UserEntity[], userId: number): boolean {
     const findMember = team.filter(member => member.id === userId).length;
-    console.log(findMember);
     return findMember ? true : false;
   }
 
