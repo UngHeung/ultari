@@ -43,9 +43,9 @@ export class TeamController {
     return this.teamService.getTeamAll();
   }
 
-  @Get('/team/applicant/:id')
+  @Get('/applicant/:id')
   getApplicantList(@Query('id') id: number): Promise<TeamEntity> {
-    return this.teamService.getTeamAndJoinTeamApplicantList(id);
+    return this.teamService.getTeamAndJoinTeamApplicantList(+id);
   }
 
   @Patch('/leader')
