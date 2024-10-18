@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -21,9 +23,26 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Post('/profile')
+  @UseGuards(AccessTokenGuard)
+  @UseInterceptors(FileInterceptor('profile', { storage: memoryStorage() }))
+  async uploadProfile(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ fileName: string }> {
+    const { fileName } = await this.userService.saveImage(file);
+
+    return { fileName };
+  }
+
+  @Post('/team/join')
+  @UseGuards(AccessTokenGuard)
+  applyJoinTeam(@Req() req, @Body() teamId: number): Promise<UserEntity> {
+    return this.applyJoinTeam(req.user.id, teamId);
+  }
+
   @Get('/')
   @UseGuards(AccessTokenGuard)
-  GetUserAll(): Promise<UserEntity[]> {
+  getUserAll(): Promise<UserEntity[]> {
     return this.userService.getUsersAll();
   }
 
@@ -51,17 +70,6 @@ export class UserController {
     return this.userService.getUserData(id);
   }
 
-  @Post('/profile')
-  @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FileInterceptor('profile', { storage: memoryStorage() }))
-  async uploadProfile(
-    @UploadedFile() file: Express.Multer.File,
-  ): Promise<{ fileName: string }> {
-    const { fileName } = await this.userService.saveImage(file);
-
-    return { fileName };
-  }
-
   @Patch('/')
   @UseGuards(AccessTokenGuard)
   async updateUser(
@@ -69,5 +77,11 @@ export class UserController {
     @Body() dto: UpdateUserDataDto,
   ): Promise<UserEntity> {
     return this.userService.updateUserData(req.user, dto);
+  }
+
+  @Delete('/team/delete/:id')
+  @UseGuards(AccessTokenGuard)
+  async deleteApplyTeam(@Req() req, @Query('id') id: number) {
+    return this.deleteApplyTeam(req.user.id, id);
   }
 }
