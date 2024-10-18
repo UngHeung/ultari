@@ -33,6 +33,12 @@ export class TeamController {
     return this.teamService.findTeamList(query);
   }
 
+  @Get('/:id')
+  @UseGuards(AccessTokenGuard)
+  getTeamAndData(@Req() req, @Param('id') id: number): Promise<TeamEntity> {
+    return this.teamService.getTeamAndTeamData(req.user, id);
+  }
+
   @Get('/')
   @UseGuards(AccessTokenGuard)
   getTeamListAll(): Promise<TeamEntity[]> {
