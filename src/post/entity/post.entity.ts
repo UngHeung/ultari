@@ -22,7 +22,7 @@ export class PostEntity extends BaseModel {
 
   @Column({ nullable: false })
   @IsString()
-  @Length(2, 300, { message: lengthValidationMessage })
+  @Length(2, 1000, { message: lengthValidationMessage })
   content: string;
 
   @Column({
