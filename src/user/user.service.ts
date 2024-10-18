@@ -30,7 +30,7 @@ export class UserService {
    * # POST
    * create user
    */
-  async createUser(dto: AuthSignUpDto) {
+  async createUser(dto: AuthSignUpDto): Promise<UserEntity> {
     return await this.registUser(dto);
   }
 
@@ -38,16 +38,8 @@ export class UserService {
    * # POST
    * save image to S3
    */
-  async saveImage(file: Express.Multer.File) {
+  async saveImage(file: Express.Multer.File): Promise<{ fileName: string }> {
     return await this.awsService.imageUpload('temp', file);
-  }
-
-  /**
-   * # GET
-   * get users all
-   */
-  async getUsersAll(): Promise<UserEntity[]> {
-    return this.findManyUsers({});
   }
 
   /**
@@ -55,7 +47,7 @@ export class UserService {
    * get my user data
    */
   async getUserData(id: number): Promise<UserEntity> {
-    return await this.findUser({ where: { id } });
+    return await this.getUser({ where: { id } });
   }
 
   /**
@@ -63,7 +55,7 @@ export class UserService {
    * get user and users team.
    */
   async getUserDataAndTeam(id: number): Promise<UserEntity> {
-    return await this.findUser({
+    return await this.getUser({
       where: { id },
       relations: { team: true },
     });
@@ -74,7 +66,7 @@ export class UserService {
    * get user and users posts.
    */
   async getUserDataAndPosts(id: number): Promise<UserEntity> {
-    return await this.findUser({
+    return await this.getUser({
       where: { id },
       relations: { posts: true },
     });
@@ -132,8 +124,8 @@ export class UserService {
    * # Base GET
    * find all users
    */
-  async findUsersAll(): Promise<UserEntity[]> {
-    const users = await this.findManyUsers({ relations: { team: true } });
+  async getUsersAll(): Promise<UserEntity[]> {
+    const users = await this.getManyUsers({ relations: { team: true } });
 
     users.map(user => delete user.password);
 
@@ -144,7 +136,7 @@ export class UserService {
    * # Base GET
    * find one user
    */
-  async findUser(
+  async getUser(
     findOneOptions: FindOneOptions<UserEntity>,
   ): Promise<UserEntity> {
     const user = await this.userRepository.findOne({
@@ -161,7 +153,7 @@ export class UserService {
    * # Base GET
    * find many users
    */
-  async findManyUsers(
+  async getManyUsers(
     findManyOptions: FindManyOptions<UserEntity>,
   ): Promise<UserEntity[]> {
     return await this.userRepository.find({
@@ -175,7 +167,7 @@ export class UserService {
    * Base GET
    * find profile
    */
-  async findUserProfile(
+  async getUserProfile(
     findOneOptions: FindOneOptions<ProfileImageEntity>,
   ): Promise<ProfileImageEntity> {
     return await this.profileImageRepository.findOne({
@@ -214,12 +206,6 @@ export class UserService {
 
     return await this.userRepository.save(user);
   }
-
-  /**
-   * # Base PUT
-   * update user team
-   */
-  async updateUserTeam(user: UserEntity, dto: UpdateUserTeamDto) {}
 
   /**
    * # Validation

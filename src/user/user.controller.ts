@@ -29,32 +29,34 @@ export class UserController {
 
   @Get('/myinfo')
   @UseGuards(AccessTokenGuard)
-  getMyUserData(@Req() req) {
+  getMyUserData(@Req() req): Promise<UserEntity> {
     return this.userService.getUserData(req.user.id);
   }
 
   @Get('/myinfo/team')
   @UseGuards(AccessTokenGuard)
-  getMyInfoAndTeam(@Req() req) {
+  getMyInfoAndTeam(@Req() req): Promise<UserEntity> {
     return this.userService.getUserDataAndTeam(req.user.id);
   }
 
   @Get('/myinfo/post')
   @UseGuards(AccessTokenGuard)
-  getMyInfoAndPost(@Req() req) {
+  getMyInfoAndPost(@Req() req): Promise<UserEntity> {
     return this.userService.getUserDataAndPosts(req.user.id);
   }
 
   @Get('/:id')
   @UseGuards(AccessTokenGuard)
-  getUserById(@Param('id') id: number) {
+  getUserById(@Param('id') id: number): Promise<UserEntity> {
     return this.userService.getUserData(id);
   }
 
   @Post('/profile')
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FileInterceptor('profile', { storage: memoryStorage() }))
-  async uploadProfile(@UploadedFile() file: Express.Multer.File) {
+  async uploadProfile(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ fileName: string }> {
     const { fileName } = await this.userService.saveImage(file);
 
     return { fileName };
@@ -62,9 +64,10 @@ export class UserController {
 
   @Patch('/')
   @UseGuards(AccessTokenGuard)
-  async updateUser(@Req() req, @Body() dto: UpdateUserDataDto) {
-    const user = await this.userService.getUserData(req.user.id);
-
+  async updateUser(
+    @Req() req,
+    @Body() dto: UpdateUserDataDto,
+  ): Promise<UserEntity> {
     return this.userService.updateUserData(req.user, dto);
   }
 }
