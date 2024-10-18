@@ -1,15 +1,14 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { TeamService } from './team.service';
-import { TeamController } from './team.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from 'src/user/entity/user.entity';
-import { TeamEntity } from './entity/team.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { UserModule } from 'src/user/user.module';
+import { TeamEntity } from './entity/team.entity';
+import { TeamController } from './team.controller';
+import { TeamService } from './team.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TeamEntity, UserEntity]),
+    TypeOrmModule.forFeature([TeamEntity]),
     forwardRef(() => AuthModule),
     forwardRef(() => UserModule),
   ],
