@@ -7,8 +7,4 @@ export class CreateTeamDto extends PickType(TeamEntity, [
   'name',
   'description',
   'community',
-]) {
-  @IsString()
-  @IsOptional()
-  description: string;
-}
+]) {}

@@ -338,6 +338,6 @@ export class TeamService {
       code = await this.generateTeamCode(teamName);
     }
 
-    return;
+    return code;
   }
 }
