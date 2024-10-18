@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { nanoid } from 'nanoid';
 import { UserEntity } from 'src/user/entity/user.entity';
+import { UserService } from 'src/user/user.service';
 import { FindOneOptions, Like, Repository } from 'typeorm';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { FindTeamDto } from './dto/find-team.dto';
@@ -19,8 +20,7 @@ export class TeamService {
   constructor(
     @InjectRepository(TeamEntity)
     private readonly teamRepository: Repository<TeamEntity>,
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
+    private readonly userService: UserService,
   ) {}
 
   /**
@@ -46,6 +46,14 @@ export class TeamService {
     const newTeam = await this.teamRepository.save(team);
 
     return newTeam;
+  }
+
+  /**
+   * # GET
+   * find team by team code
+   */
+  async findTeamByTeamCode(teamCode: string): Promise<TeamEntity> {
+    return await this.getTeam({ where: { teamCode } });
   }
 
   /**
@@ -78,7 +86,7 @@ export class TeamService {
       throw new BadRequestException(`${team.name} 팀의 멤버가 아닙니다.`);
     }
 
-    const user = await this.userRepository.findOneBy({ id: dto.userId });
+    const user = await this.userService.getUserData(dto.userId);
 
     team.leader = user;
     this.teamRepository.save(team);
@@ -114,7 +122,7 @@ export class TeamService {
     if (!dto.userId) {
       team.subLeader = null;
     } else {
-      const user = await this.userRepository.findOneBy({ id: dto.userId });
+      const user = await this.userService.getUserData(dto.userId);
 
       if (!user) {
         throw new NotFoundException('유저가 존재하지 않습니다.');
@@ -131,7 +139,10 @@ export class TeamService {
    * # Patch
    * join team
    */
-  async addMember(leader: UserEntity, dto: { teamId: number; userId: number }) {
+  async signMember(
+    leader: UserEntity,
+    dto: { teamId: number; userId: number },
+  ): Promise<TeamEntity> {
     const team = await this.teamRepository.findOne({
       where: { id: dto.teamId },
       relations: { leader: true, member: true },
@@ -145,7 +156,7 @@ export class TeamService {
       throw new ConflictException('이미 가입된 사용자입니다.');
     }
 
-    const user = await this.userRepository.findOneBy({ id: dto.userId });
+    const user = await this.userService.getUserData(dto.userId);
 
     if (user.team) {
       throw new ConflictException('이미 가입된 목장이 있는 사용자입니다.');
@@ -154,7 +165,32 @@ export class TeamService {
     team.member = [...team.member, user];
     this.teamRepository.save(team);
 
-    return team.member;
+    return team;
+  }
+
+  async unsignMember(
+    leader: UserEntity,
+    dto: { teamId: number; userId: number },
+  ): Promise<TeamEntity> {
+    const team = await this.teamRepository.findOne({
+      where: { id: dto.teamId },
+      relations: { leader: true, member: true },
+    });
+
+    if (team.leader.id !== leader.id) {
+      throw new UnauthorizedException('권한이 없습니다. 리더가 아닙니다.');
+    }
+
+    if (!this.existsMember(team.member, dto.userId)) {
+      throw new NotFoundException('이미 멤버가 아닙니다.');
+    }
+
+    const user = await this.userService.getUserData(dto.userId);
+
+    team.member = team.member.filter(member => member.id !== user.id);
+    this.teamRepository.save(team);
+
+    return team;
   }
 
   /**
