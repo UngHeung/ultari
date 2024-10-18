@@ -12,6 +12,7 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { FindTeamDto } from './dto/find-team.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
 import { TeamEntity } from './entity/team.entity';
+import { nanoid } from 'nanoid';
 
 @Injectable()
 export class TeamService {
@@ -23,68 +24,36 @@ export class TeamService {
   ) {}
 
   /**
-   *
+   * # POST
+   * create team
    */
-  async createTeam(user: Omit<UserEntity, 'password'>, dto: CreateTeamDto) {
+  async createTeam(user: UserEntity, dto: CreateTeamDto) {
+    if (user.team) {
+      throw new BadRequestException('이미 소속된 목장이 있습니다.');
+    }
+
     const team = this.teamRepository.create({
-      leader: user,
       name: dto.name,
       community: dto.community,
       description: dto.description,
-      active: false,
+      leader: user,
+
       member: [user],
+      isActive: false,
+      teamCode: await this.generateTeamCode(dto.name),
     });
 
     const newTeam = await this.teamRepository.save(team);
+
     return newTeam;
   }
 
   /**
-   *
-   */
-  async getTeamById(id: number) {
-    const findOptions: FindOneOptions<TeamEntity> = {
-      where: { id },
-      relations: {
-        member: true,
-        leader: true,
-        subLeader: true,
-      },
-    };
-
-    const team = await this.getTeam(findOptions);
-
-    if (!team) {
-      throw new BadRequestException('팀이 존재하지 않습니다.');
-    }
-
-    return team;
-  }
-
-  /**
-   *
-   */
-  async getTeamListAll() {
-    const findOptions: FindOneOptions<TeamEntity> = {
-      relations: {
-        leader: true,
-      },
-    };
-
-    const teamList = await this.getTeamList(findOptions);
-    return teamList;
-  }
-
-  /**
-   *
+   * # GET
+   * find team by keywords (name, community)
    */
   async findTeamList(dto: FindTeamDto) {
-    console.log('dto : ', dto);
-
     const findOption: FindOneOptions<TeamEntity> = {
-      relations: {
-        leader: true,
-      },
       where:
         dto.type === 'community'
           ? { community: Like(`%${dto.keyword}%`) }
@@ -99,12 +68,13 @@ export class TeamService {
   }
 
   /**
-   *
+   * # Patch
+   * change leader
    */
   async changeLeader(dto: UpdateLeaderDto) {
     const team = await this.teamRepository.findOneBy({ id: dto.teamId });
 
-    if (this.findTeamMember(team.member, dto.userId)) {
+    if (this.existsMember(team.member, dto.userId)) {
       throw new BadRequestException(`${team.name} 팀의 멤버가 아닙니다.`);
     }
 
@@ -116,24 +86,17 @@ export class TeamService {
   }
 
   /**
-   *
+   * # Patch
+   * change sub leader
    */
   async changeSubLeader(applicant: UserEntity, dto: UpdateLeaderDto) {
-    const teamFindOption: FindOneOptions<TeamEntity> = {
-      where: {
-        id: dto.teamId,
-      },
-      relations: {
-        leader: true,
-        subLeader: true,
-        member: true,
-      },
-    };
-
-    const team = await this.getTeam(teamFindOption);
+    const team = await this.getTeam({
+      where: { id: dto.teamId },
+      relations: { subLeader: true },
+    });
 
     if (!team) {
-      throw new BadRequestException('팀이 존재하지 않습니다.');
+      throw new NotFoundException('팀이 존재하지 않습니다.');
     }
 
     if (applicant.id !== team.leader.id) {
@@ -144,7 +107,7 @@ export class TeamService {
       throw new BadRequestException('리더는 서브리더가 될 수 없습니다.');
     }
 
-    if (!this.findTeamMember(team.member, dto.userId)) {
+    if (!this.existsMember(team.member, dto.userId)) {
       throw new BadRequestException(`${team.name} (팀)의 멤버가 아닙니다.`);
     }
 
@@ -154,8 +117,7 @@ export class TeamService {
       const user = await this.userRepository.findOneBy({ id: dto.userId });
 
       if (!user) {
-        team.subLeader = null;
-        throw new BadRequestException('유저가 존재하지 않습니다.');
+        throw new NotFoundException('유저가 존재하지 않습니다.');
       }
 
       team.subLeader = user;
@@ -166,22 +128,20 @@ export class TeamService {
   }
 
   /**
-   *
+   * # Patch
+   * join team
    */
   async addMember(leader: UserEntity, dto: { teamId: number; userId: number }) {
     const team = await this.teamRepository.findOne({
       where: { id: dto.teamId },
-      relations: {
-        leader: true,
-        member: true,
-      },
+      relations: { leader: true, member: true },
     });
 
     if (team.leader.id !== leader.id) {
       throw new UnauthorizedException('권한이 없습니다. 리더가 아닙니다.');
     }
 
-    if (this.findTeamMember(team.member, dto.userId)) {
+    if (this.existsMember(team.member, dto.userId)) {
       throw new ConflictException('이미 가입된 사용자입니다.');
     }
 
@@ -193,38 +153,19 @@ export class TeamService {
 
     team.member = [...team.member, user];
     this.teamRepository.save(team);
+
     return team.member;
   }
 
   /**
-   *
-   */
-  findTeamMember(team: UserEntity[], userId: number) {
-    const result = team.filter(member => member.id === userId).length;
-    return result ? true : false;
-  }
-
-  /**
-   *
+   * # DELETE
+   * delete team
    */
   async deleteTeam(user: UserEntity, teamId: number) {
-    console.log('user : ', user);
-    console.log('teamId : ', teamId);
-    const team = await this.teamRepository.findOne({
-      where: {
-        id: teamId,
-      },
-      relations: {
-        leader: true,
-      },
-    });
-
-    console.log('team : ', team);
-
-    console.log(user.id, team.leader.id);
+    const team = await this.getTeam({ where: { id: teamId } });
 
     if (!user) {
-      throw new NotFoundException('권한이 없습니다.');
+      throw new BadRequestException('잘못된 요청입니다.');
     }
 
     if (!team) {
@@ -232,27 +173,80 @@ export class TeamService {
     }
 
     if (user.id !== team.leader.id) {
-      throw new BadRequestException('권한이 없습니다. 팀 리더가 아닙니다.');
+      throw new UnauthorizedException('권한이 없습니다.');
     }
 
-    const response = await this.teamRepository.delete(team);
-
-    console.log(response);
+    await this.teamRepository.delete(team);
 
     return true;
   }
 
   /**
-   *
+   * # Base GET
+   * find team all
    */
-  async getTeam(findOption: FindOneOptions<TeamEntity>) {
-    return await this.teamRepository.findOne({ ...findOption });
+  async getTeamAll(): Promise<TeamEntity[]> {
+    return await this.teamRepository.find();
   }
 
   /**
-   *
+   * # Base GET
+   * find team
+   */
+  async getTeam(
+    findOneOptions: FindOneOptions<TeamEntity>,
+  ): Promise<TeamEntity> {
+    const team = await this.teamRepository.findOne({
+      ...findOneOptions,
+      relations: { leader: true, member: true },
+    });
+
+    if (!team) {
+      throw new NotFoundException('팀을 찾을 수 없습니다.');
+    }
+
+    return;
+  }
+
+  /**
+   * # Base GET
+   * get team list
    */
   async getTeamList(findOption?: FindOneOptions<TeamEntity>) {
-    return await this.teamRepository.find({ ...findOption });
+    return await this.teamRepository.find({
+      ...findOption,
+      relations: { leader: true },
+    });
+  }
+
+  /**
+   * # Base GET
+   * exists team by team code
+   */
+  async existsTeamCode(teamCode: string): Promise<boolean> {
+    return await this.teamRepository.exists({ where: { teamCode } });
+  }
+
+  /**
+   * # Base GET
+   * exists team member
+   */
+  existsMember(team: UserEntity[], userId: number) {
+    const findMember = team.filter(member => member.id === userId).length;
+    return findMember ? true : false;
+  }
+
+  /**
+   * Generator
+   * generate team code
+   */
+  async generateTeamCode(teamName: string): Promise<string> {
+    let code = `${teamName}-${nanoid(6)}`;
+
+    while (await this.existsTeamCode(code)) {
+      code = await this.generateTeamCode(teamName);
+    }
+
+    return;
   }
 }
