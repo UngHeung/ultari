@@ -15,6 +15,7 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { FindTeamDto } from './dto/find-team.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
 import { TeamService } from './team.service';
+import { TeamEntity } from './entity/team.entity';
 
 @Controller('team')
 export class TeamController {
@@ -22,47 +23,58 @@ export class TeamController {
 
   @Post('/')
   @UseGuards(AccessTokenGuard)
-  createTeam(@Req() req, @Body() dto: CreateTeamDto) {
+  createTeam(@Req() req, @Body() dto: CreateTeamDto): Promise<TeamEntity> {
     return this.teamService.createTeam(req.user, dto);
   }
 
   @Get('/find')
   @UseGuards(AccessTokenGuard)
-  findTeam(@Query() query: FindTeamDto) {
+  findTeam(@Query() query: FindTeamDto): Promise<TeamEntity[]> {
     return this.teamService.findTeamList(query);
   }
 
   @Get('/')
   @UseGuards(AccessTokenGuard)
-  getTeamListAll() {
+  getTeamListAll(): Promise<TeamEntity[]> {
     return this.teamService.getTeamAll();
   }
 
   @Patch('/leader')
   @UseGuards(AccessTokenGuard)
-  changeLeader(@Body() dto: UpdateLeaderDto) {
+  changeLeader(@Body() dto: UpdateLeaderDto): Promise<TeamEntity> {
     return this.teamService.changeLeader(dto);
   }
 
   @Patch('/leader/sub')
   @UseGuards(AccessTokenGuard)
-  changeSubLeader(@Req() req, @Body() dto: UpdateLeaderDto) {
+  changeSubLeader(
+    @Req() req,
+    @Body() dto: UpdateLeaderDto,
+  ): Promise<TeamEntity> {
     return this.teamService.changeSubLeader(req.user, dto);
   }
 
   @Patch('/member/sign')
   @UseGuards(AccessTokenGuard)
-  addMember(@Req() req, @Body() dto: { teamId: number; userId: number }) {
-    return this.teamService.addMember(req.user, dto);
+  addMember(
+    @Req() req,
+    @Body() dto: { teamId: number; userId: number },
+  ): Promise<TeamEntity> {
+    return this.teamService.signMember(req.user, dto);
   }
 
   @Patch('/member/resign')
   @UseGuards(AccessTokenGuard)
-  deleteMember() {}
+  deleteMember(
+    @Req() req,
+    @Body() dto: { teamId: number; userId: number },
+  ): Promise<TeamEntity> {
+    return this.teamService.unsignMember(req.user, dto);
+  }
 
   @Delete('/:id')
   @UseGuards(AccessTokenGuard)
-  deleteTeam(@Req() req, @Param('id') id: number) {
+  deleteTeam(@Req() req, @Param('id') id: number): Promise<boolean> {
     return this.teamService.deleteTeam(req.user, id);
   }
 }

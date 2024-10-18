@@ -27,7 +27,7 @@ export class TeamService {
    * # POST
    * create team
    */
-  async createTeam(user: UserEntity, dto: CreateTeamDto) {
+  async createTeam(user: UserEntity, dto: CreateTeamDto): Promise<TeamEntity> {
     if (user.team) {
       throw new BadRequestException('이미 소속된 목장이 있습니다.');
     }
@@ -79,7 +79,7 @@ export class TeamService {
    * # Patch
    * change leader
    */
-  async changeLeader(dto: UpdateLeaderDto) {
+  async changeLeader(dto: UpdateLeaderDto): Promise<TeamEntity> {
     const team = await this.teamRepository.findOneBy({ id: dto.teamId });
 
     if (this.existsMember(team.member, dto.userId)) {
@@ -90,14 +90,17 @@ export class TeamService {
 
     team.leader = user;
     this.teamRepository.save(team);
-    return team.leader;
+    return team;
   }
 
   /**
    * # Patch
    * change sub leader
    */
-  async changeSubLeader(applicant: UserEntity, dto: UpdateLeaderDto) {
+  async changeSubLeader(
+    applicant: UserEntity,
+    dto: UpdateLeaderDto,
+  ): Promise<TeamEntity> {
     const team = await this.getTeam({
       where: { id: dto.teamId },
       relations: { subLeader: true },
@@ -197,7 +200,7 @@ export class TeamService {
    * # DELETE
    * delete team
    */
-  async deleteTeam(user: UserEntity, teamId: number) {
+  async deleteTeam(user: UserEntity, teamId: number): Promise<boolean> {
     const team = await this.getTeam({ where: { id: teamId } });
 
     if (!user) {
@@ -248,7 +251,9 @@ export class TeamService {
    * # Base GET
    * get team list
    */
-  async getTeamList(findOption?: FindOneOptions<TeamEntity>) {
+  async getTeamList(
+    findOption?: FindOneOptions<TeamEntity>,
+  ): Promise<TeamEntity[]> {
     return await this.teamRepository.find({
       ...findOption,
       relations: { leader: true },
@@ -267,7 +272,7 @@ export class TeamService {
    * # Base GET
    * exists team member
    */
-  existsMember(team: UserEntity[], userId: number) {
+  existsMember(team: UserEntity[], userId: number): boolean {
     const findMember = team.filter(member => member.id === userId).length;
     return findMember ? true : false;
   }
