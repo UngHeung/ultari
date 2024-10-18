@@ -36,8 +36,8 @@ export class UserController {
 
   @Post('/team/join')
   @UseGuards(AccessTokenGuard)
-  applyJoinTeam(@Req() req, @Body() teamId: number): Promise<UserEntity> {
-    return this.applyJoinTeam(req.user.id, teamId);
+  applyJoinTeam(@Req() req, @Body('id') id: number): Promise<UserEntity> {
+    return this.userService.addJoinTeamApplicant(req.user.id, id);
   }
 
   @Get('/')
