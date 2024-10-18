@@ -27,6 +27,15 @@ export class TeamController {
     return this.teamService.createTeam(req.user, dto);
   }
 
+  @Post('/join')
+  @UseGuards(AccessTokenGuard)
+  addApplicants(
+    @Req() req,
+    @Body() dto: { teamId: number },
+  ): Promise<TeamEntity> {
+    return this.teamService.addJoinTeamApplicant(req.user.id, dto.teamId);
+  }
+
   @Get('/find')
   @UseGuards(AccessTokenGuard)
   findTeam(@Query() query: FindTeamDto): Promise<TeamEntity[]> {
@@ -34,13 +43,11 @@ export class TeamController {
   }
 
   @Get('/:id')
-  @UseGuards(AccessTokenGuard)
-  getTeamAndData(@Req() req, @Param('id') id: number): Promise<TeamEntity> {
-    return this.teamService.getTeamAndTeamData(req.user, id);
+  getTeamAndData(@Param('id') id: number): Promise<TeamEntity> {
+    return this.teamService.getTeamAndTeamData(id);
   }
 
   @Get('/')
-  @UseGuards(AccessTokenGuard)
   getTeamListAll(): Promise<TeamEntity[]> {
     return this.teamService.getTeamAll();
   }
