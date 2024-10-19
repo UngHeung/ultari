@@ -1,12 +1,11 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
   Post,
-  Query,
+  Put,
   Req,
   UploadedFile,
   UseGuards,
@@ -79,9 +78,9 @@ export class UserController {
     return this.userService.updateUserData(req.user, dto);
   }
 
-  @Delete('/team/delete/:id')
+  @Put('/team/cancel/:id')
   @UseGuards(AccessTokenGuard)
-  async deleteApplyTeam(@Req() req, @Query('id') id: number) {
-    return this.deleteApplyTeam(req.user.id, id);
+  async cancelApplyTeam(@Req() req, @Param('id') id: number) {
+    return this.userService.cancelApplyTeam(req.user.id, id);
   }
 }

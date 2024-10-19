@@ -101,6 +101,31 @@ export class UserService {
 
   /**
    * # GET
+   * get user all data
+   * relation props has only id
+   */
+  async getUserDataAll(id: number): Promise<UserEntity> {
+    return await this.getUser({
+      where: { id },
+      relations: {
+        profile: true,
+        team: true,
+        lead: true,
+        subLead: true,
+        applyTeam: true,
+      },
+      select: {
+        profile: { id: true },
+        team: { id: true },
+        lead: { id: true },
+        subLead: { id: true },
+        applyTeam: { id: true },
+      },
+    });
+  }
+
+  /**
+   * # GET
    * get user and users posts.
    */
   async getUserDataAndPosts(id: number): Promise<UserEntity> {
@@ -111,21 +136,25 @@ export class UserService {
   }
 
   /**
-   * # DELETE
-   * delete applyTeam
+   * # Put
+   * cancel applyTeam
    */
-  async deleteApplyTeam(userId, deleteUserid: number): Promise<UserEntity> {
-    const user = await this.getUserData(userId);
-    const targetUser = await this.getUserData(deleteUserid);
+  async cancelApplyTeam(
+    userId: number,
+    cancelUserid: number,
+  ): Promise<UserEntity> {
+    const user = await this.getUserDataAll(userId);
+    const targetUser = await this.getUserDataAll(cancelUserid);
 
-    if (!(user.team.id === targetUser.applyTeam.id)) {
+    if (user.id === targetUser.id) {
+      user.applyTeam = null;
+      return await this.userRepository.save(user);
+    } else if (user.team?.id === targetUser.applyTeam?.id) {
+      targetUser.applyTeam = null;
+      return await this.userRepository.save(targetUser);
+    } else {
       throw new UnauthorizedException('권한이 없습니다.');
     }
-
-    user.applyTeam = null;
-    this.userRepository.save(targetUser);
-
-    return user;
   }
 
   /**

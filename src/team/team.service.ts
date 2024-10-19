@@ -114,6 +114,39 @@ export class TeamService {
   }
 
   /**
+   * # Put
+   * sign team
+   */
+  async signMember(
+    leader: UserEntity,
+    dto: { teamId: number; userId: number },
+  ): Promise<TeamEntity> {
+    const team = await this.teamRepository.findOne({
+      where: { id: dto.teamId },
+      relations: { leader: true, member: true },
+    });
+
+    if (team.leader.id !== leader.id) {
+      throw new UnauthorizedException('권한이 없습니다. 리더가 아닙니다.');
+    }
+
+    if (this.existsMember(team.member, dto.userId)) {
+      throw new ConflictException('이미 가입된 사용자입니다.');
+    }
+
+    const user = await this.userService.getUserData(dto.userId);
+
+    if (user.team) {
+      throw new ConflictException('이미 가입된 목장이 있는 사용자입니다.');
+    }
+
+    team.member = [...team.member, user];
+    this.teamRepository.save(team);
+
+    return team;
+  }
+
+  /**
    * # Patch
    * change leader
    */
@@ -177,68 +210,6 @@ export class TeamService {
   }
 
   /**
-   * # Patch
-   * sign team
-   */
-  async signMember(
-    leader: UserEntity,
-    dto: { teamId: number; userId: number },
-  ): Promise<TeamEntity> {
-    const team = await this.teamRepository.findOne({
-      where: { id: dto.teamId },
-      relations: { leader: true, member: true },
-    });
-
-    if (team.leader.id !== leader.id) {
-      throw new UnauthorizedException('권한이 없습니다. 리더가 아닙니다.');
-    }
-
-    if (this.existsMember(team.member, dto.userId)) {
-      throw new ConflictException('이미 가입된 사용자입니다.');
-    }
-
-    const user = await this.userService.getUserData(dto.userId);
-
-    if (user.team) {
-      throw new ConflictException('이미 가입된 목장이 있는 사용자입니다.');
-    }
-
-    team.member = [...team.member, user];
-    this.teamRepository.save(team);
-
-    return team;
-  }
-
-  /**
-   * # PATCH
-   * unsign member
-   */
-  async unsignMember(
-    leader: UserEntity,
-    dto: { teamId: number; userId: number },
-  ): Promise<TeamEntity> {
-    const team = await this.teamRepository.findOne({
-      where: { id: dto.teamId },
-      relations: { leader: true, member: true },
-    });
-
-    if (team.leader.id !== leader.id) {
-      throw new UnauthorizedException('권한이 없습니다. 리더가 아닙니다.');
-    }
-
-    if (!this.existsMember(team.member, dto.userId)) {
-      throw new NotFoundException('이미 멤버가 아닙니다.');
-    }
-
-    const user = await this.userService.getUserData(dto.userId);
-
-    team.member = team.member.filter(member => member.id !== user.id);
-    this.teamRepository.save(team);
-
-    return team;
-  }
-
-  /**
    * # DELETE
    * delete team
    */
@@ -268,6 +239,35 @@ export class TeamService {
     await this.teamRepository.delete(team);
 
     return true;
+  }
+
+  /**
+   * # Delete
+   * resign member
+   */
+  async resignMember(
+    leader: UserEntity,
+    dto: { teamId: number; userId: number },
+  ): Promise<TeamEntity> {
+    const team = await this.teamRepository.findOne({
+      where: { id: dto.teamId },
+      relations: { leader: true, member: true },
+    });
+
+    if (team.leader.id !== leader.id) {
+      throw new UnauthorizedException('권한이 없습니다. 리더가 아닙니다.');
+    }
+
+    if (!this.existsMember(team.member, dto.userId)) {
+      throw new NotFoundException('이미 멤버가 아닙니다.');
+    }
+
+    const user = await this.userService.getUserData(dto.userId);
+
+    team.member = team.member.filter(member => member.id !== user.id);
+    this.teamRepository.save(team);
+
+    return team;
   }
 
   /**
