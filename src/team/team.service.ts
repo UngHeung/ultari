@@ -95,7 +95,7 @@ export class TeamService {
   async getTeamAndJoinTeamApplicantList(id: number): Promise<TeamEntity> {
     return await this.getTeam({
       where: { id },
-      relations: { leader: true, applicants: true },
+      relations: { leader: true, member: true, applicants: true },
     });
   }
 
