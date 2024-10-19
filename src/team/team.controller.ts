@@ -6,11 +6,13 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
+import { UserService } from 'src/user/user.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { FindTeamDto } from './dto/find-team.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
@@ -19,7 +21,10 @@ import { TeamService } from './team.service';
 
 @Controller('team')
 export class TeamController {
-  constructor(private readonly teamService: TeamService) {}
+  constructor(
+    private readonly teamService: TeamService,
+    private readonly userService: UserService,
+  ) {}
 
   @Post('/')
   @UseGuards(AccessTokenGuard)
@@ -44,8 +49,19 @@ export class TeamController {
   }
 
   @Get('/applicant/:id')
-  getApplicantList(@Query('id') id: number): Promise<TeamEntity> {
-    return this.teamService.getTeamAndJoinTeamApplicantList(+id);
+  getApplicantList(@Query() query: { id: number }): Promise<TeamEntity> {
+    return this.teamService.getTeamAndJoinTeamApplicantList(query.id);
+  }
+
+  @Put('/member/sign')
+  @UseGuards(AccessTokenGuard)
+  async addMember(
+    @Req() req,
+    @Body() dto: { teamId: number; userId: number },
+  ): Promise<TeamEntity> {
+    const result = await this.teamService.signMember(req.user, dto);
+    await this.userService.cancelApplyTeam(req.user.id, dto.userId);
+    return result;
   }
 
   @Patch('/leader')
@@ -63,27 +79,18 @@ export class TeamController {
     return this.teamService.changeSubLeader(req.user, dto);
   }
 
-  @Patch('/member/sign')
+  @Delete('/:id')
   @UseGuards(AccessTokenGuard)
-  addMember(
-    @Req() req,
-    @Body() dto: { teamId: number; userId: number },
-  ): Promise<TeamEntity> {
-    return this.teamService.signMember(req.user, dto);
+  deleteTeam(@Req() req, @Param('id') id: number): Promise<boolean> {
+    return this.teamService.deleteTeam(req.user, id);
   }
 
-  @Patch('/member/resign')
+  @Delete('/member/resign')
   @UseGuards(AccessTokenGuard)
   deleteMember(
     @Req() req,
     @Body() dto: { teamId: number; userId: number },
   ): Promise<TeamEntity> {
-    return this.teamService.unsignMember(req.user, dto);
-  }
-
-  @Delete('/:id')
-  @UseGuards(AccessTokenGuard)
-  deleteTeam(@Req() req, @Param('id') id: number): Promise<boolean> {
-    return this.teamService.deleteTeam(req.user, id);
+    return this.teamService.resignMember(req.user, dto);
   }
 }
