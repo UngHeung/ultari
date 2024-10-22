@@ -5,10 +5,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { promises } from 'fs';
-import { basename, join } from 'path';
+import { AwsService } from 'src/aws/aws.service';
 import { CommonService } from 'src/common/common.service';
-import { POST_IMAGE_PATH, TEMP_FOLDER_PATH } from 'src/common/const/path.const';
+import { POST_IMAGE_PATH } from 'src/common/const/path.const';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { Repository } from 'typeorm';
 import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
@@ -27,6 +26,7 @@ export class PostService {
     @InjectRepository(PostImageEntity)
     private readonly postImageRepository: Repository<PostImageEntity>,
     private readonly commonService: CommonService,
+    private readonly awsService: AwsService,
   ) {}
 
   /**
@@ -88,7 +88,7 @@ export class PostService {
 
     dto.title && (post.title = dto.title);
     dto.content && (post.content = dto.content);
-    dto.images && (post.images = dto.images);
+    dto.images.length > 0 && (post.images = dto.images);
     dto.visibility && (post.visibility = dto.visibility);
     dto.contentType && (post.contentType = dto.contentType);
 
@@ -184,7 +184,7 @@ export class PostService {
    * delete post by post id
    * delete images files in folder
    */
-  async deletePost(user: UserEntity, id: number): Promise<number> {
+  async deletePost(user: UserEntity, id: number): Promise<boolean> {
     const post: PostEntity & { images?: PostImageEntity[] } =
       await this.postRepository.findOne({
         where: {
@@ -204,23 +204,28 @@ export class PostService {
       throw new NotFoundException(`삭제할 게시물이 없습니다. id : ${id}`);
     }
 
-    for (let i = 0; i < post.images.length; i++) {
-      this.commonService.removeFile(POST_IMAGE_PATH, post.images[i].path);
+    if (post.images.length > 0) {
+      for (let i = 0; i < post.images.length; i++) {
+        await this.awsService.moveImage(
+          `public/images/post/${post.images[i].path}`,
+          `public/images/temp/${post.images[i].path}`,
+        );
+      }
     }
 
-    return id;
+    return true;
   }
 
   /**
    * @param CreatePostDto
    */
-  createPostImage(dto: CreatePostImageDto) {
-    const tempFilePath = join(TEMP_FOLDER_PATH, dto.path);
-    const fileName = basename(tempFilePath);
-    const newPath = join(POST_IMAGE_PATH, fileName);
+  async createPostImage(dto: CreatePostImageDto) {
+    const currentPath = `public/images/temp/${dto.path}`;
     const result = this.postImageRepository.save(dto);
-
-    promises.rename(tempFilePath, newPath);
+    await this.awsService.moveImage(
+      currentPath,
+      `public/images/post/${dto.path}`,
+    );
 
     return result;
   }
@@ -242,5 +247,12 @@ export class PostService {
       { ...POST_DEFAULT_FIND_OPTIONS },
       'post',
     );
+  }
+
+  /**
+   *
+   */
+  async saveImage(file: Express.Multer.File) {
+    return await this.awsService.imageUpload('temp', file);
   }
 }

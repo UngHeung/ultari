@@ -4,69 +4,83 @@ import {
   Get,
   Param,
   Patch,
+  Post,
+  Put,
   Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { UserService } from './user.service';
-import { UserEntity } from './entity/user.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ImageTypeEnum } from 'src/common/enum/image.enum';
+import { memoryStorage } from 'multer';
+import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
+import { UpdateUserDataDto } from './dto/update-user-data.dto';
+import { UserEntity } from './entity/user.entity';
+import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Post('/profile')
+  @UseGuards(AccessTokenGuard)
+  @UseInterceptors(FileInterceptor('profile', { storage: memoryStorage() }))
+  async uploadProfile(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ fileName: string }> {
+    const { fileName } = await this.userService.saveImage(file);
+
+    return { fileName };
+  }
+
+  @Post('/team/join')
+  @UseGuards(AccessTokenGuard)
+  applyJoinTeam(@Req() req, @Body('id') id: number): Promise<UserEntity> {
+    return this.userService.addJoinTeamApplicant(req.user.id, id);
+  }
+
   @Get('/')
   @UseGuards(AccessTokenGuard)
-  getUsers(): Promise<UserEntity[]> {
-    return this.userService.getUsers();
+  getUserAll(): Promise<UserEntity[]> {
+    return this.userService.getUsersAll();
   }
 
   @Get('/myinfo')
   @UseGuards(AccessTokenGuard)
-  getMyInfo(@Req() req) {
-    return this.userService.getUserById(req.user.id);
+  getMyUserData(@Req() req): Promise<UserEntity> {
+    return this.userService.getUserData(req.user.id);
   }
 
   @Get('/myinfo/team')
   @UseGuards(AccessTokenGuard)
-  getMyInfoAndTeam(@Req() req) {
-    return this.userService.getUserWithTeam(req.user.id);
+  getMyInfoAndTeam(@Req() req): Promise<UserEntity> {
+    return this.userService.getUserDataAndTeam(req.user.id);
   }
 
   @Get('/myinfo/post')
   @UseGuards(AccessTokenGuard)
-  getMyINfoAndPost(@Req() req) {
-    return this.userService.getUserWithPosts(req.user.id);
-  }
-
-  @Get('/myinfo/team-and-post')
-  getUserWithTeamAndPosts(@Req() req) {
-    return this.userService.getUserWithTeamAndPosts(req.user.id);
+  getMyInfoAndPost(@Req() req): Promise<UserEntity> {
+    return this.userService.getUserDataAndPosts(req.user.id);
   }
 
   @Get('/:id')
   @UseGuards(AccessTokenGuard)
-  getUserById(@Param('id') id: number) {
-    return this.userService.getUserById(id);
+  getUserById(@Param('id') id: number): Promise<UserEntity> {
+    return this.userService.getUserData(id);
   }
 
   @Patch('/')
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FileInterceptor('userProfile'))
-  async updateUser(@Req() req, @Body() dto: UpdateUserDto) {
-    const user = await this.userService.updateUser(req.user, dto);
+  async updateUser(
+    @Req() req,
+    @Body() dto: UpdateUserDataDto,
+  ): Promise<UserEntity> {
+    return this.userService.updateUserData(req.user, dto);
+  }
 
-    await this.userService.createProfileImage({
-      user,
-      path: dto.path,
-      type: ImageTypeEnum.PROFILE_IMAGE,
-    });
-
-    return await this.userService.getUserById(req.user.id);
+  @Put('/team/cancel/:id')
+  @UseGuards(AccessTokenGuard)
+  async cancelApplyTeam(@Req() req, @Param('id') id: number) {
+    return this.userService.cancelApplyTeam(req.user.id, id);
   }
 }

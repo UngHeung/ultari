@@ -1,7 +1,13 @@
 import { Exclude } from 'class-transformer';
-import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  Length,
+} from 'class-validator';
 import { BaseModel } from 'src/common/entity/base.entity';
-import { emailValidationMessage } from 'src/common/validator/message/email-validation.message';
+import { formValidationMessage } from 'src/common/validator/message/form-validation.message';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { stringValidationMessage } from 'src/common/validator/message/type-validation.message';
 import { PostEntity } from 'src/post/entity/post.entity';
@@ -26,46 +32,52 @@ export enum RoleEnum {
 
 @Entity()
 export class UserEntity extends BaseModel {
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   @IsString({ message: stringValidationMessage })
   @Length(6, 15, { message: lengthValidationMessage })
   account: string;
 
-  @Column()
+  @Column({ nullable: false })
   @IsString({ message: stringValidationMessage })
   @Length(8, 20, { message: lengthValidationMessage })
   @Exclude({ toPlainOnly: true })
   password: string;
 
-  @Column()
+  @Column({ nullable: false })
   @IsString({ message: stringValidationMessage })
   @Length(2, 10, { message: lengthValidationMessage })
   name: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   @IsString({ message: stringValidationMessage })
   @Length(12, 13, { message: lengthValidationMessage })
+  @IsPhoneNumber('KR', { message: formValidationMessage })
   phone: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   @IsString({ message: stringValidationMessage })
-  @IsEmail({}, { message: emailValidationMessage })
+  @IsEmail({}, { message: formValidationMessage })
   email: string;
 
-  @Column()
+  @Column({ nullable: false })
   @IsString({ message: stringValidationMessage })
-  community?: string;
-
-  @IsOptional()
-  @OneToOne(() => ProfileImageEntity, profile => profile.user)
-  @JoinColumn()
-  profile?: ProfileImageEntity;
+  community: string;
 
   @Column({
     enum: Object.values(RoleEnum),
+    nullable: false,
     default: RoleEnum.USER,
   })
   role: string;
+
+  @IsOptional()
+  @OneToOne(() => ProfileImageEntity, profile => profile.user, {
+    eager: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  profile?: ProfileImageEntity;
 
   @OneToMany(() => PostEntity, post => post.author)
   posts: PostEntity[];
@@ -77,10 +89,11 @@ export class UserEntity extends BaseModel {
   team: TeamEntity;
 
   @OneToOne(() => TeamEntity, team => team.leader)
-  @JoinColumn()
   lead: TeamEntity;
 
   @OneToOne(() => TeamEntity, team => team.subLeader)
-  @JoinColumn()
   subLead: TeamEntity;
+
+  @ManyToOne(() => TeamEntity, team => team.applicants)
+  applyTeam: TeamEntity;
 }

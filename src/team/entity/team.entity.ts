@@ -1,32 +1,53 @@
-import { IsBoolean, IsString } from 'class-validator';
+import { IsBoolean, IsString, Length } from 'class-validator';
 import { BaseModel } from 'src/common/entity/base.entity';
+import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 @Entity()
 export class TeamEntity extends BaseModel {
-  @Column()
+  @Column({ nullable: false })
   @IsString()
+  @Length(2, 10, { message: lengthValidationMessage })
   name: string;
 
-  @Column()
+  @Column({ nullable: false })
   @IsString()
+  @Length(2, 15, { message: lengthValidationMessage })
   community: string;
 
-  @Column()
+  @Column({ nullable: true })
   @IsString()
+  @Length(2, 30, { message: lengthValidationMessage })
   description?: string;
 
   @OneToMany(() => UserEntity, user => user.team)
   member: UserEntity[];
 
-  @OneToOne(() => UserEntity, user => user.lead)
+  @OneToMany(() => UserEntity, user => user.applyTeam)
+  applicants?: UserEntity[];
+
+  @OneToOne(() => UserEntity, user => user.lead, {
+    nullable: false,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
   leader: UserEntity;
 
-  @OneToOne(() => UserEntity, user => user.subLead)
+  @OneToOne(() => UserEntity, user => user.subLead, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
   subLeader?: UserEntity;
 
-  @Column()
+  @Column({ nullable: false, default: false })
   @IsBoolean()
-  active: boolean;
+  isActive: boolean;
+
+  @Column({ unique: true, nullable: false, default: false })
+  @IsString()
+  teamCode: string;
 }

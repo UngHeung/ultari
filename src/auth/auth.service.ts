@@ -49,6 +49,8 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await this.authenticateAccountAndPassword(dto);
 
+    delete user.password;
+
     return {
       accessToken: this.signToken(user, false),
       refreshToken: this.signToken(user, true),
@@ -70,7 +72,7 @@ export class AuthService {
    *
    */
   async authenticateAccountAndPassword(dto: AuthLoginDto): Promise<UserEntity> {
-    const existsUser = await this.userService.getUserByUserAccount(dto.account);
+    const existsUser = await this.userService.findUserAndPassword(dto);
 
     if (!existsUser) {
       throw new UnauthorizedException('아이디 또는 비밀번호를 확인해주세요.');
@@ -95,7 +97,7 @@ export class AuthService {
       sub: user.id,
       name: user.name,
       role: user.role,
-      profile: user.profile?.path ?? null,
+      path: user.profile?.path ?? '',
       community: user.community,
       type: isRefreshToken ? 'refresh' : 'access',
     };
@@ -213,8 +215,13 @@ export class AuthService {
       throw new BadRequestException('비밀번호를 입력해주세요.');
     }
 
-    const findUser = await this.userService.getUserByUserAccount(user.account);
+    const findUser = await this.userService.findUserAndPassword({
+      id: user.id,
+      password,
+    });
     const passOk = await bcrypt.compare(password, findUser.password);
+
+    delete findUser.password;
 
     if (!passOk) {
       throw new UnauthorizedException('비밀번호를 확인해주세요.');

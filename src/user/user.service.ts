@@ -1,21 +1,19 @@
 import {
+  BadRequestException,
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
-  Logger,
-  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { promises } from 'fs';
-import { basename, join } from 'path';
+import { AuthLoginDto } from 'src/auth/dto/auth-login.dto';
 import { AuthSignUpDto } from 'src/auth/dto/auth-signup.dto';
-import { CommonService } from 'src/common/common.service';
-import {
-  PROFILE_IMAGE_PATH,
-  TEMP_FOLDER_PATH,
-} from 'src/common/const/path.const';
+import { AwsService } from 'src/aws/aws.service';
+import { ImageTypeEnum } from 'src/common/enum/image.enum';
+import { TeamService } from 'src/team/team.service';
 import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
-import { CreateProfileImageDto } from './dto/create-profile-image.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserDataDto } from './dto/update-user-data.dto';
 import { ProfileImageEntity } from './entity/profile-image.entity';
 import { UserEntity } from './entity/user.entity';
 
@@ -26,192 +24,342 @@ export class UserService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(ProfileImageEntity)
     private readonly profileImageRepository: Repository<ProfileImageEntity>,
-    private readonly commonService: CommonService,
+    @Inject(forwardRef(() => TeamService))
+    private readonly teamService: TeamService,
+    private readonly awsService: AwsService,
   ) {}
 
   /**
-   * 1. receive user information
-   * 2. check already registered account, email, phone
-   * 3. save new user in user repository
+   * # POST
+   * create user
    */
-  async createUser(dto: AuthSignUpDto) {
-    const { account, phone, email }: AuthSignUpDto = dto;
-
-    if (account && (await this.userRepository.exists({ where: { account } }))) {
-      throw new ConflictException('이미 등록된 계정입니다.');
-    }
-
-    if (phone && (await this.userRepository.exists({ where: { phone } }))) {
-      throw new ConflictException('이미 등록된 연락처입니다.');
-    }
-
-    if (email && (await this.userRepository.exists({ where: { email } }))) {
-      throw new ConflictException('이미 등록된 이메일입니다.');
-    }
-
-    const newUser = this.userRepository.create(dto);
-
-    return await this.userRepository.save(newUser);
+  async createUser(dto: AuthSignUpDto): Promise<UserEntity> {
+    return await this.registUser(dto);
   }
 
   /**
-   * 1. receive request
-   * 2. get all users from user repository
-   * 3. return users
+   * # POST
+   * save image to S3
    */
-  async getUsers(): Promise<UserEntity[]> {
-    const user = await this.getManyUsers();
-    return user;
+  async saveImage(file: Express.Multer.File): Promise<{ fileName: string }> {
+    return await this.awsService.imageUpload('temp', file);
   }
 
   /**
-   * 1. receive user id
-   * 2. get user by user id from user repository
-   * 3. return user
+   * # POST
+   * add join team applicant
    */
-  async getUserById(id: number): Promise<UserEntity> {
-    const user = await this.getOneUser({
-      where: { id },
-      relations: { profile: true },
-    });
-    return user;
+  async addJoinTeamApplicant(
+    userId: number,
+    teamId: number,
+  ): Promise<UserEntity> {
+    const team = await this.teamService.getTeamById(teamId);
+    const user = await this.getUserDataAndApplyTeam(userId);
+
+    if (this.teamService.existsMember(team.member, userId)) {
+      throw new BadRequestException('이미 가입된 사용자입니다.');
+    }
+
+    if (user.applyTeam && user.applyTeam.id === team.id) {
+      throw new BadRequestException('이미 신청중인 사용자입니다.');
+    }
+
+    user.applyTeam = team;
+
+    return await this.userRepository.save(user);
   }
 
-  async getUserWithTeam(id: number) {
-    const user = await this.getOneUser({
-      where: { id },
-      relations: { team: true, lead: true, subLead: true },
-    });
-    Logger.log(user);
-
-    return user;
+  /**
+   * # GET
+   * get my user data
+   */
+  async getUserData(id: number): Promise<UserEntity> {
+    return await this.getUser({ where: { id } });
   }
 
-  async getUserWithPosts(id: number) {
-    const user = await this.getOneUser({
+  /**
+   * # GET
+   * get user data
+   */
+  async getUserDataAndApplyTeam(id: number): Promise<UserEntity> {
+    return await this.getUser({
       where: { id },
-      relations: { posts: true, likedPosts: true },
+      relations: { applyTeam: true, profile: true },
     });
-
-    return user;
   }
 
-  async getUserWithTeamAndPosts(id: number) {
-    const user = await this.getOneUser({
+  /**
+   * # GET
+   * get user and users team.
+   */
+  async getUserDataAndTeam(id: number): Promise<UserEntity> {
+    return await this.getUser({
+      where: { id },
+      relations: { profile: true, team: true },
+    });
+  }
+
+  /**
+   * # GET
+   * get user all data
+   * relation props has only id
+   */
+  async getUserDataAll(id: number): Promise<UserEntity> {
+    return await this.getUser({
       where: { id },
       relations: {
+        profile: true,
         team: true,
         lead: true,
         subLead: true,
-        posts: true,
+        applyTeam: true,
+      },
+      select: {
+        profile: { id: true },
+        team: { id: true },
+        lead: { id: true },
+        subLead: { id: true },
+        applyTeam: { id: true },
       },
     });
-
-    return user;
-  }
-
-  async getUserByFindOptions(findOptions: FindOneOptions<UserEntity>) {
-    const user = await this.getOneUser(findOptions);
-    return user;
   }
 
   /**
-   * 1. receive user account
-   * 2. get user by user account from user repostitory
-   * 3. return user
+   * # GET
+   * get user and users posts.
    */
-  async getUserByUserAccount(account: string): Promise<UserEntity> {
-    const user = await this.getOneUser({
-      where: { account },
-      relations: { profile: true },
+  async getUserDataAndPosts(id: number): Promise<UserEntity> {
+    return await this.getUser({
+      where: { id },
+      relations: { profile: true, posts: true },
     });
-    return user;
   }
 
   /**
-   * 1. receive data for update user information
-   * 2. request get user by user id
-   * 3. compare input password and stored password
-   * 4. check duplicated user email and phone
-   * 5. update data for target user
-   * 6. if exist user profile in recieved user data request delete current profile and save new profile
-   * 7. save updated user
+   * # Put
+   * cancel applyTeam
    */
-  async updateUser(
-    user: UserEntity,
-    updateUserDto: UpdateUserDto,
+  async cancelApplyTeam(
+    userId: number,
+    cancelUserid: number,
   ): Promise<UserEntity> {
-    const { phone, email, community, profile }: UpdateUserDto = updateUserDto;
+    const user = await this.getUserDataAll(userId);
+    const targetUser = await this.getUserDataAll(cancelUserid);
 
-    if (phone && user.phone !== phone) {
-      const userPhoneExists = await this.userRepository.findOne({
-        where: { phone },
-      });
-
-      if (userPhoneExists) {
-        throw new ConflictException('이미 등록된 연락처입니다.');
-      }
-
-      user.phone = phone;
+    if (user.id === targetUser.id) {
+      user.applyTeam = null;
+      return await this.userRepository.save(user);
+    } else if (user.team?.id === targetUser.applyTeam?.id) {
+      targetUser.applyTeam = null;
+      return await this.userRepository.save(targetUser);
+    } else {
+      throw new UnauthorizedException('권한이 없습니다.');
     }
-
-    if (email && user.email !== email) {
-      const userExists = await this.userRepository.findOne({
-        where: { email },
-      });
-
-      if (userExists) {
-        throw new ConflictException('이미 등록된 이메일 입니다.');
-      }
-
-      user.email = email;
-    }
-
-    if (profile) {
-      if (user.profile.path.length > 0) {
-        this.commonService.removeFile(PROFILE_IMAGE_PATH, user.profile.path);
-      }
-
-      user.profile = profile;
-    }
-
-    if (community) {
-      user.community = community;
-    }
-
-    this.userRepository.save(user);
-
-    return user;
   }
 
-  createProfileImage(dto: CreateProfileImageDto) {
-    const tempFilePath = join(TEMP_FOLDER_PATH, dto.path);
-    const fileName = basename(tempFilePath);
-    const newPath = join(PROFILE_IMAGE_PATH, fileName);
-    const result = this.profileImageRepository.save(dto);
+  /**
+   * # Base POST
+   * regist user
+   */
+  async registUser(dto: AuthSignUpDto): Promise<UserEntity> {
+    const user = this.userRepository.create({
+      ...dto,
+    });
 
-    promises.rename(tempFilePath, newPath);
+    this.registUserValidator(dto);
+
+    const result = await this.userRepository.save(user);
+
+    delete result.password;
 
     return result;
   }
 
-  async getOneUser(findOptions: FindOneOptions<UserEntity>) {
-    const user = await this.userRepository.findOne(findOptions);
+  /**
+   * # Base POST
+   * has password for login
+   */
+  async findUserAndPassword(dto: AuthLoginDto): Promise<UserEntity> {
+    return await this.userRepository.findOne({
+      where: [{ account: dto?.account }, { id: dto?.id }],
+      relations: { profile: true },
+    });
+  }
 
-    if (!user) {
-      throw new NotFoundException('해당 유저가 존재하지 않습니다.');
-    }
+  /**
+   * # Base POST
+   * create user profile
+   */
+  createUserProfile(user: UserEntity, profilePath: string): ProfileImageEntity {
+    const profile = this.profileImageRepository.create({
+      user,
+      path: profilePath,
+      type: ImageTypeEnum.PROFILE_IMAGE,
+    });
+
+    this.awsService.moveImage(
+      `public/images/temp/${profilePath}`,
+      `public/images/profile/${profilePath}`,
+    );
+
+    return profile;
+  }
+
+  /**
+   * # Base GET
+   * find all users
+   */
+  async getUsersAll(): Promise<UserEntity[]> {
+    const users = await this.getManyUsers({
+      // relations: { profile: true },
+    });
+
+    users.map(user => delete user.password);
+
+    return users;
+  }
+
+  /**
+   * # Base GET
+   * find one user
+   */
+  async getUser(
+    findOneOptions: FindOneOptions<UserEntity>,
+  ): Promise<UserEntity> {
+    const user = await this.userRepository.findOne({
+      relations: { profile: true },
+      ...findOneOptions,
+    });
+
+    delete user.password;
 
     return user;
   }
 
-  async getManyUsers(findOptions?: FindManyOptions<UserEntity>) {
-    const users = await this.userRepository.find(findOptions ?? null);
+  /**
+   * # Base GET
+   * find many users
+   */
+  async getManyUsers(
+    findManyOptions: FindManyOptions<UserEntity>,
+  ): Promise<UserEntity[]> {
+    return await this.userRepository.find({
+      relations: { profile: true },
+      select: { password: false },
+      ...findManyOptions,
+    });
+  }
 
-    if (!users) {
-      throw new NotFoundException('해당 유저가 존재하지 않습니다.');
+  /**
+   * Base GET
+   * find profile
+   */
+  async getUserProfile(
+    findOneOptions: FindOneOptions<ProfileImageEntity>,
+  ): Promise<ProfileImageEntity> {
+    return await this.profileImageRepository.findOne({
+      ...findOneOptions,
+    });
+  }
+
+  /**
+   * # Base PUT
+   * update user data
+   */
+  async updateUserData(
+    user: UserEntity,
+    dto: UpdateUserDataDto,
+  ): Promise<UserEntity> {
+    await this.updateUserValidator(user, dto);
+
+    user.phone = dto.phone;
+    user.email = dto.email;
+    user.community = dto.community;
+
+    if (dto.profilePath) {
+      if (user.profile) {
+        await this.awsService.moveImage(
+          `public/images/profile/${user.profile.path}`,
+          `public/images/temp/${user.profile.path}`,
+        );
+
+        user.profile.path = dto.profilePath;
+      } else {
+        const profile = this.createUserProfile(user, dto.profilePath);
+
+        user.profile = profile;
+      }
     }
 
-    return users;
+    return await this.userRepository.save(user);
+  }
+
+  /**
+   * # Validation
+   * user dto validator for regist
+   */
+  async registUserValidator(dto: AuthSignUpDto): Promise<void> {
+    const { account, phone, email }: AuthSignUpDto = dto;
+
+    if (!account) {
+      throw new BadRequestException('아이디를 입력해주세요.');
+    }
+
+    if (!phone) {
+      throw new BadRequestException('연락처를 입력해주세요.');
+    }
+
+    if (!email) {
+      throw new BadRequestException('이메일을 입력해주세요.');
+    }
+
+    if (await this.userRepository.exists({ where: { account } })) {
+      throw new ConflictException('이미 등록된 계정입니다.');
+    }
+
+    if (await this.userRepository.exists({ where: { phone } })) {
+      throw new ConflictException('이미 등록된 연락처입니다.');
+    }
+
+    if (await this.userRepository.exists({ where: { email } })) {
+      throw new ConflictException('이미 등록된 이메일입니다.');
+    }
+  }
+
+  /**
+   * # Validation
+   * user dto validator for update
+   */
+  async updateUserValidator(
+    user: UserEntity,
+    dto: UpdateUserDataDto,
+  ): Promise<void> {
+    const { phone, email, community } = dto;
+
+    if (!phone) {
+      throw new BadRequestException('연락처를 입력해주세요.');
+    }
+
+    if (!email) {
+      throw new BadRequestException('이메일을 입력해주세요.');
+    }
+
+    if (!community) {
+      throw new BadRequestException('소속을 입력해주세요.');
+    }
+
+    if (
+      user.phone !== phone &&
+      (await this.userRepository.exists({ where: { phone } }))
+    ) {
+      throw new ConflictException('이미 등록된 연락처입니다.');
+    }
+
+    if (
+      user.email !== email &&
+      (await this.userRepository.exists({ where: { email } }))
+    ) {
+      throw new ConflictException('이미 등록된 이메일입니다.');
+    }
   }
 }
