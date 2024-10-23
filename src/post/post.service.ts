@@ -228,7 +228,9 @@ export class PostService {
         author: { profile: true },
         images: true,
         likers: true,
-        comments: true,
+        comments: {
+          writer: true,
+        },
       },
     });
   }
