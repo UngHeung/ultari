@@ -144,4 +144,10 @@ export class PostController {
   deletePost(@Req() req, @Param('id') id: number): Promise<boolean> {
     return this.postService.deletePost(req.user, id);
   }
+
+  @Delete('/:id/comment')
+  @UseGuards(AccessTokenGuard)
+  deleteComment(@Req() req, @Param('id') id: number): Promise<boolean> {
+    return this.postService.deleteComment(req.user, id);
+  }
 }
