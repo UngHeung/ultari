@@ -9,7 +9,6 @@ export class CreatePostDto extends PickType(PostEntity, [
   'content',
   'visibility',
   'contentType',
-  'comments',
 ]) {
   @IsString()
   @IsOptional()
@@ -22,8 +21,4 @@ export class CreatePostDto extends PickType(PostEntity, [
   @IsString({ each: true })
   @IsOptional()
   images?: string[] = [];
-
-  @IsString()
-  @IsOptional()
-  comments: PostCommentEntity[] = [];
 }
