@@ -328,11 +328,7 @@ export class PostService {
       throw new UnauthorizedException('자신의 댓글만 삭제가 가능합니다.');
     }
 
-    const deleteResponse = await this.postCommentRepository.delete(comment);
-
-    if (!deleteResponse.affected) {
-      throw new InternalServerErrorException('삭제에 실패했습니다.');
-    }
+    const deleteResponse = await this.postCommentRepository.remove(comment);
 
     return true;
   }
