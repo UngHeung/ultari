@@ -129,6 +129,16 @@ export class PostController {
     return this.postService.updateLikes(req.user, id);
   }
 
+  @Patch('/:id/comment')
+  @UseGuards(AccessTokenGuard)
+  updateComment(
+    @Req() req,
+    @Param('id') id: number,
+    @Body() dto: { content: string },
+  ): Promise<PostCommentEntity> {
+    return this.postService.updateComment(req.user, id, dto);
+  }
+
   @Delete('/:id')
   @UseGuards(AccessTokenGuard)
   deletePost(@Req() req, @Param('id') id: number): Promise<boolean> {
