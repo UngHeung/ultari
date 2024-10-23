@@ -32,25 +32,6 @@ export class PostService {
   ) {}
 
   /**
-   * # POST
-   * create comment
-   */
-  async createComment(
-    writer: UserEntity,
-    dto: { postId: number; content: string },
-  ) {
-    const post = await this.getPostById(dto.postId);
-
-    const comment = this.postCommentRepository.create({
-      writer,
-      content: dto.content,
-      post,
-    });
-
-    return await this.postCommentRepository.save(comment);
-  }
-
-  /**
    * # GET
    * get post by post id
    */
@@ -83,7 +64,7 @@ export class PostService {
     id: number,
     dto: UpdatePostDto,
   ): Promise<PostEntity> {
-    const post = await this.getPost({
+    const post = await this.getPostForUpdate({
       where: {
         author: { id: user.id },
         id,
@@ -96,11 +77,36 @@ export class PostService {
 
     dto.title && (post.title = dto.title);
     dto.content && (post.content = dto.content);
-    dto.images.length > 0 && (post.images = dto.images);
+    dto.images && dto.images.length > 0 && (post.images = dto.images);
     dto.visibility && (post.visibility = dto.visibility);
     dto.contentType && (post.contentType = dto.contentType);
 
     return await this.postRepository.save(post);
+  }
+
+  /**
+   * async # Patch
+   * update comment
+   */
+  async updateComment(
+    user: UserEntity,
+    id: number,
+    dto: { content: string },
+  ): Promise<PostCommentEntity> {
+    const comment = await this.getCommentForUpdate({
+      where: {
+        writer: { id: user.id },
+        id,
+      },
+    });
+
+    if (!comment) {
+      throw new UnauthorizedException('본인의 댓글이 아닙니다.');
+    }
+
+    comment.content = dto.content;
+
+    return await this.postCommentRepository.save(comment);
   }
 
   /**
@@ -157,7 +163,7 @@ export class PostService {
       ...dto,
       author,
       images: [] as PostImageEntity[],
-      comments: [],
+      comments: [] as PostCommentEntity[],
     });
 
     return await this.postRepository.save(post);
@@ -179,6 +185,37 @@ export class PostService {
   }
 
   /**
+   * # Base POST
+   * create comment
+   */
+  async createComment(
+    writer: UserEntity,
+    dto: { postId: number; content: string },
+  ) {
+    const post = await this.getPostById(dto.postId);
+
+    const comment = this.postCommentRepository.create({
+      writer,
+      content: dto.content,
+      post,
+    });
+
+    return await this.postCommentRepository.save(comment);
+  }
+
+  /**
+   * # Base GET
+   * get post simple data
+   */
+  async getPostForUpdate(findOneOptions: FindOneOptions) {
+    return await this.postRepository.findOne({
+      ...findOneOptions,
+      relations: { author: true, images: true },
+      select: { author: { id: true } },
+    });
+  }
+
+  /**
    * # Base GET
    * get post
    */
@@ -191,6 +228,7 @@ export class PostService {
         author: { profile: true },
         images: true,
         likers: true,
+        comments: true,
       },
     });
   }
@@ -208,6 +246,19 @@ export class PostService {
         author: { profile: true },
         likers: true,
       },
+    });
+  }
+
+  /**
+   * # Base GET
+   * get comment for update
+   */
+  async getCommentForUpdate(
+    findOneOptions: FindOneOptions<PostCommentEntity>,
+  ): Promise<PostCommentEntity> {
+    return await this.postCommentRepository.findOne({
+      ...findOneOptions,
+      relations: { writer: true },
     });
   }
 
