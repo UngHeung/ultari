@@ -1,4 +1,5 @@
-import { IsNumber, IsOptional, IsString, Length } from 'class-validator';
+import { IsNumber, IsString, Length } from 'class-validator';
+import { CommentEntity } from 'src/comment/entity/comment.entity';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { UserEntity } from 'src/user/entity/user.entity';
@@ -63,6 +64,6 @@ export class PostEntity extends BaseModel {
   images?: PostImageEntity[];
 
   @Column()
-  @IsOptional()
-  comments?: string; // will change type to comments entity
+  @OneToMany(() => CommentEntity, comment => comment.target)
+  comments: CommentEntity<PostEntity>[]; // will change type to comments entity
 }
