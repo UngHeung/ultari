@@ -98,6 +98,9 @@ export class UserEntity extends BaseModel {
   @ManyToOne(() => TeamEntity, team => team.applicants)
   applyTeam: TeamEntity;
 
-  @OneToMany(() => PostCommentEntity, comment => comment.writer)
+  @OneToMany(() => PostCommentEntity, comment => comment.writer, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   comments: PostCommentEntity[];
 }
