@@ -1,5 +1,4 @@
 import { IsNumber, IsString, Length } from 'class-validator';
-import { CommentEntity } from 'src/comment/entity/comment.entity';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { UserEntity } from 'src/user/entity/user.entity';
@@ -12,6 +11,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ContentTypeEnum, PublicEnum } from '../enum/post.enum';
+import { PostCommentEntity } from './post-comment.entity';
 import { PostImageEntity } from './post-image.entity';
 
 @Entity()
@@ -63,7 +63,6 @@ export class PostEntity extends BaseModel {
   @OneToMany(() => PostImageEntity, image => image.post)
   images?: PostImageEntity[];
 
-  @Column()
-  @OneToMany(() => CommentEntity, comment => comment.target)
-  comments: CommentEntity<PostEntity>[]; // will change type to comments entity
+  @OneToMany(() => PostCommentEntity, comment => comment.post)
+  comments: PostCommentEntity[];
 }
