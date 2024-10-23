@@ -43,7 +43,7 @@ export class PostService {
       ...dto,
       author,
       images: [] as PostImageEntity[],
-      comments: '',
+      comments: [],
     });
 
     const newPost = await this.postRepository.save(post);
