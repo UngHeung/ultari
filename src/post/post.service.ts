@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AwsService } from 'src/aws/aws.service';
 import { CommonService } from 'src/common/common.service';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { Repository } from 'typeorm';
+import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
 import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -32,26 +32,6 @@ export class PostService {
   ) {}
 
   /**
-   * @param author
-   * @param CreatePostDto
-   * 1. request to create new post
-   * 2. returns created new post
-   */
-  async createPost(
-    author: UserEntity,
-    dto: CreatePostDto,
-  ): Promise<PostEntity> {
-    const post = this.postRepository.create({
-      ...dto,
-      author,
-      images: [] as PostImageEntity[],
-      comments: [],
-    });
-
-    return await this.postRepository.save(post);
-  }
-
-  /**
    * # POST
    * create comment
    */
@@ -71,13 +51,11 @@ export class PostService {
   }
 
   /**
-   * @param id
-   * 1. find post by id
-   * 2. return post
+   * # GET
+   * get post by post id
    */
   async getPostById(id: number): Promise<PostEntity> {
-    const post = await this.postRepository.findOne({
-      ...POST_DEFAULT_FIND_OPTIONS,
+    const post = await this.getPost({
       where: { id },
     });
 
@@ -85,17 +63,15 @@ export class PostService {
   }
 
   /**
-   * @param id
-   * @param UpdatePostDto
-   * update post with received dto data
-   * return new post
+   * # PATCH
+   * update post
    */
   async updatePost(
     user: UserEntity,
     id: number,
     dto: UpdatePostDto,
   ): Promise<PostEntity> {
-    const post = await this.postRepository.findOne({
+    const post = await this.getPost({
       where: {
         author: { id: user.id },
         id,
@@ -112,41 +88,33 @@ export class PostService {
     dto.visibility && (post.visibility = dto.visibility);
     dto.contentType && (post.contentType = dto.contentType);
 
-    const newPost = this.postRepository.save(post);
-
-    return newPost;
+    return await this.postRepository.save(post);
   }
 
   /**
-   * @param userId
-   * @param postId
+   * # Patch
+   * update view count
    */
   async increaseViews(userId: number, postId: number): Promise<void> {
     const post = await this.getPostById(postId);
 
-    if (userId === post.author.id) {
-      throw new BadRequestException(
-        '본인이 작성한 게시물의 조회수를 올릴 수 없습니다.',
-      );
+    if (userId && userId !== post.author.id) {
+      post.viewCount++;
+      await this.postRepository.save(post);
     }
-
-    post.viewCount++;
-    await this.postRepository.save(post);
   }
 
   /**
-   * @param userId
-   * @param postId
+   * # Patch
+   * update like count
    */
   async updateLikes(user: UserEntity, postId: number): Promise<number> {
-    const post = await this.postRepository.findOne({
-      where: {
-        id: postId,
-      },
+    const post = await this.getPost({
+      where: { id: postId },
       relations: {
-        author: true,
         likers: true,
       },
+      select: { likers: { id: true } },
     });
 
     if (user.id === post.author.id) {
@@ -155,15 +123,9 @@ export class PostService {
       );
     }
 
-    /**
-     * @todo
-     * 좋아요 누른 게시물 many to one 연결
-     * 좋아요는 최대 1회만 가능하도록 설정
-     */
-
     const exists = this.existsUserInLikers(user.id, post);
 
-    post.likers = await this.saveOrDropPostLikers(user, post, !exists);
+    post.likers = await this.addOrDeletePostLikers(user, post, !exists);
     post.likeCount = post.likers.length;
 
     await this.postRepository.save(post);
@@ -171,38 +133,75 @@ export class PostService {
     return post.likeCount;
   }
 
-  existsUserInLikers(userId: number, post: PostEntity): boolean {
-    if (post.likers?.length <= 0) {
-      return false;
-    }
+  /**
+   * # Base POST
+   * create post
+   */
+  async createPost(
+    author: UserEntity,
+    dto: CreatePostDto,
+  ): Promise<PostEntity> {
+    const post = this.postRepository.create({
+      ...dto,
+      author,
+      images: [] as PostImageEntity[],
+      comments: [],
+    });
 
-    for (const liker of post?.likers) {
-      if (userId === liker.id) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  async saveOrDropPostLikers(
-    user: UserEntity,
-    post: PostEntity,
-    isSaved: boolean,
-  ): Promise<UserEntity[]> {
-    if (post.likers?.length <= 0 || isSaved) {
-      post.likers = [...post?.likers, user];
-    } else {
-      post.likers = post.likers.filter(liker => user.id !== liker.id);
-    }
-
-    return post.likers;
+    return await this.postRepository.save(post);
   }
 
   /**
-   * @param id
-   * delete post by post id
-   * delete images files in folder
+   * # Base POST
+   * create post image
+   */
+  async createPostImage(dto: CreatePostImageDto) {
+    const currentPath = `public/images/temp/${dto.path}`;
+    const result = this.postImageRepository.save(dto);
+    await this.awsService.moveImage(
+      currentPath,
+      `public/images/post/${dto.path}`,
+    );
+
+    return result;
+  }
+
+  /**
+   * # Base GET
+   * get post
+   */
+  async getPost(
+    findOneOptions: FindOneOptions<PostEntity>,
+  ): Promise<PostEntity> {
+    return await this.postRepository.findOne({
+      ...findOneOptions,
+      relations: {
+        author: { profile: true },
+        images: true,
+        likers: true,
+      },
+    });
+  }
+
+  /**
+   * # Base GET
+   * get post list
+   */
+  async getPostList(
+    findManyOptions: FindManyOptions<PostEntity>,
+  ): Promise<PostEntity[]> {
+    return await this.postRepository.find({
+      ...findManyOptions,
+      relations: {
+        author: { profile: true },
+        likers: true,
+      },
+    });
+  }
+
+  /**
+   * # Base DELETE
+   * delete post by id
    */
   async deletePost(user: UserEntity, id: number): Promise<boolean> {
     const post: PostEntity & { images?: PostImageEntity[] } =
@@ -237,22 +236,7 @@ export class PostService {
   }
 
   /**
-   * @param CreatePostDto
-   */
-  async createPostImage(dto: CreatePostImageDto) {
-    const currentPath = `public/images/temp/${dto.path}`;
-    const result = this.postImageRepository.save(dto);
-    await this.awsService.moveImage(
-      currentPath,
-      `public/images/post/${dto.path}`,
-    );
-
-    return result;
-  }
-
-  /**
-   * @param PaginatePostDto
-   * generate paginate
+   * # Base
    */
   async paginatePosts(dto: PaginatePostDto): Promise<{
     data: PostEntity[];
@@ -270,9 +254,43 @@ export class PostService {
   }
 
   /**
-   *
+   * # Base
    */
   async saveImage(file: Express.Multer.File) {
     return await this.awsService.imageUpload('temp', file);
+  }
+
+  /**
+   * # Base
+   */
+  async addOrDeletePostLikers(
+    user: UserEntity,
+    post: PostEntity,
+    isSaved: boolean,
+  ): Promise<UserEntity[]> {
+    if (post.likers?.length <= 0 || isSaved) {
+      post.likers = [...post?.likers, user];
+    } else {
+      post.likers = post.likers.filter(liker => user.id !== liker.id);
+    }
+
+    return post.likers;
+  }
+
+  /**
+   * # Base
+   */
+  existsUserInLikers(userId: number, post: PostEntity): boolean {
+    if (post.likers?.length <= 0) {
+      return false;
+    }
+
+    for (const liker of post?.likers) {
+      if (userId === liker.id) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
