@@ -91,9 +91,20 @@ export class PostController {
     return this.postService.paginatePosts(query);
   }
 
+  @Get('/find')
+  findPosts(@Query() query: { keyword: string }): Promise<PostEntity[]> {
+    return this.postService.findPostList(query.keyword);
+  }
+
   @Get('/:id')
   getPostById(@Param('id') id: string) {
     return this.postService.getPostById(+id);
+  }
+
+  @Get('/comment')
+  @UseGuards(AccessTokenGuard)
+  getAllCommentsByPostId(): Promise<PostCommentEntity[]> {
+    return;
   }
 
   @Patch('/:id')

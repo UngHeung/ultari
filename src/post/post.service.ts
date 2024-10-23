@@ -63,6 +63,18 @@ export class PostService {
   }
 
   /**
+   * # GET
+   * find post by keywords
+   */
+  async findPostList(keywords: string): Promise<PostEntity[]> {
+    const postList = await this.getPostList({
+      where: [{ title: `%${keywords}%` }, { content: `%${keywords}%` }],
+    });
+
+    return postList;
+  }
+
+  /**
    * # PATCH
    * update post
    */
