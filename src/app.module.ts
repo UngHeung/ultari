@@ -11,7 +11,6 @@ import { getTypeOrmConfig } from './configs/typeorm.config';
 import { PostModule } from './post/post.module';
 import { TeamModule } from './team/team.module';
 import { UserModule } from './user/user.module';
-import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -30,7 +29,6 @@ import { CommentModule } from './comment/comment.module';
     PostModule,
     CommonModule,
     AwsModule,
-    CommentModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor },
