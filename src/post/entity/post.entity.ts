@@ -65,5 +65,5 @@ export class PostEntity extends BaseModel {
 
   @Column()
   @OneToMany(() => CommentEntity, comment => comment.target)
-  comments: CommentEntity<PostEntity>[]; // will change type to comments entity
+  comments: CommentEntity<PostEntity>[];
 }
