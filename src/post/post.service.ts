@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -228,7 +229,9 @@ export class PostService {
         author: { profile: true },
         images: true,
         likers: true,
-        comments: true,
+        comments: {
+          writer: true,
+        },
       },
     });
   }
@@ -263,6 +266,18 @@ export class PostService {
   }
 
   /**
+   * # Base GET
+   * get comment by id
+   */
+  async getCommentForDelete(id: number): Promise<PostCommentEntity> {
+    return await this.postCommentRepository.findOne({
+      where: { id },
+      relations: { writer: true },
+      select: { writer: { id: true } },
+    });
+  }
+
+  /**
    * # Base DELETE
    * delete post by id
    */
@@ -282,8 +297,8 @@ export class PostService {
 
     const deleteResult = await this.postRepository.delete(id);
 
-    if (!deleteResult.affected) {
-      throw new NotFoundException(`삭제할 게시물이 없습니다. id : ${id}`);
+    if (!deleteResult) {
+      throw new NotFoundException(`삭제에 실패했습니다.`);
     }
 
     if (post.images.length > 0) {
@@ -294,6 +309,26 @@ export class PostService {
         );
       }
     }
+
+    return true;
+  }
+
+  /**
+   * # Base DELETE
+   * delete comment
+   */
+  async deleteComment(user: UserEntity, id: number): Promise<boolean> {
+    const comment = await this.getCommentForDelete(id);
+
+    if (!comment) {
+      throw new NotFoundException(`삭제할 댓글이 없습니다. id : ${id}`);
+    }
+
+    if (comment.writer.id !== user.id) {
+      throw new UnauthorizedException('자신의 댓글만 삭제가 가능합니다.');
+    }
+
+    const deleteResponse = await this.postCommentRepository.remove(comment);
 
     return true;
   }

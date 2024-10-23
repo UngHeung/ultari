@@ -63,6 +63,9 @@ export class PostEntity extends BaseModel {
   @OneToMany(() => PostImageEntity, image => image.post)
   images?: PostImageEntity[];
 
-  @OneToMany(() => PostCommentEntity, comment => comment.post)
+  @OneToMany(() => PostCommentEntity, comment => comment.post, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   comments: PostCommentEntity[];
 }
