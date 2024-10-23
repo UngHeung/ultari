@@ -12,11 +12,11 @@ export class CreatePostDto extends PickType(PostEntity, [
 ]) {
   @IsString()
   @IsOptional()
-  contentType?: ContentTypeEnum;
+  contentType: ContentTypeEnum = ContentTypeEnum.FREE;
 
   @IsString()
   @IsOptional()
-  visibility?: PublicEnum;
+  visibility: PublicEnum = PublicEnum.PUBLIC;
 
   @IsString({ each: true })
   @IsOptional()
