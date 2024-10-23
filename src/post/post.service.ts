@@ -7,7 +7,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { AwsService } from 'src/aws/aws.service';
 import { CommonService } from 'src/common/common.service';
-import { POST_IMAGE_PATH } from 'src/common/const/path.const';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { Repository } from 'typeorm';
 import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
@@ -15,6 +14,7 @@ import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PaginatePostDto } from './dto/paginate-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PostCommentEntity } from './entity/post-comment.entity';
 import { PostImageEntity } from './entity/post-image.entity';
 import { PostEntity } from './entity/post.entity';
 
@@ -25,6 +25,8 @@ export class PostService {
     private readonly postRepository: Repository<PostEntity>,
     @InjectRepository(PostImageEntity)
     private readonly postImageRepository: Repository<PostImageEntity>,
+    @InjectRepository(PostCommentEntity)
+    private readonly postCommentRepository: Repository<PostCommentEntity>,
     private readonly commonService: CommonService,
     private readonly awsService: AwsService,
   ) {}
@@ -46,8 +48,26 @@ export class PostService {
       comments: [],
     });
 
-    const newPost = await this.postRepository.save(post);
-    return newPost;
+    return await this.postRepository.save(post);
+  }
+
+  /**
+   * # POST
+   * create comment
+   */
+  async createComment(
+    writer: UserEntity,
+    dto: { postId: number; content: string },
+  ) {
+    const post = await this.getPostById(dto.postId);
+
+    const comment = this.postCommentRepository.create({
+      writer,
+      content: dto.content,
+      post,
+    });
+
+    return await this.postCommentRepository.save(comment);
   }
 
   /**

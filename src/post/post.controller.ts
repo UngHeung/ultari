@@ -20,6 +20,7 @@ import { ImageTypeEnum } from 'src/common/enum/image.enum';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PaginatePostDto } from './dto/paginate-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PostCommentEntity } from './entity/post-comment.entity';
 import { PostEntity } from './entity/post.entity';
 import { PostService } from './post.service';
 
@@ -68,6 +69,15 @@ export class PostController {
     }
 
     return { fileNames };
+  }
+
+  @Post('/comment')
+  @UseGuards(AccessTokenGuard)
+  async createComment(
+    @Req() req,
+    @Body() dto: { postId: number; content: string },
+  ): Promise<PostCommentEntity> {
+    return this.postService.createComment(req.user, dto);
   }
 
   @Get('/')
