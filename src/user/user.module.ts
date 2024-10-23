@@ -6,6 +6,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { AwsModule } from 'src/aws/aws.module';
 import { PUBLIC_ROOT_FOLDER_PATH } from 'src/common/const/path.const';
 import { multerModuleOptions } from 'src/common/multer/file-upload.multer';
+import { PostCommentEntity } from 'src/post/entity/post-comment.entity';
 import { PostEntity } from 'src/post/entity/post.entity';
 import { TeamEntity } from 'src/team/entity/team.entity';
 import { TeamModule } from 'src/team/team.module';
@@ -27,6 +28,7 @@ import { UserService } from './user.service';
       ProfileImageEntity,
       TeamEntity,
       PostEntity,
+      PostCommentEntity,
     ]),
     forwardRef(() => AuthModule),
     forwardRef(() => TeamModule),
