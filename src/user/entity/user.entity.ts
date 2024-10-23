@@ -6,14 +6,11 @@ import {
   IsString,
   Length,
 } from 'class-validator';
-import {
-  CommentEntity,
-  HasCommentsEntities,
-} from 'src/comment/entity/comment.entity';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { formValidationMessage } from 'src/common/validator/message/form-validation.message';
 import { lengthValidationMessage } from 'src/common/validator/message/length-validation.message';
 import { stringValidationMessage } from 'src/common/validator/message/type-validation.message';
+import { PostCommentEntity } from 'src/post/entity/post-comment.entity';
 import { PostEntity } from 'src/post/entity/post.entity';
 import { TeamEntity } from 'src/team/entity/team.entity';
 import {
@@ -101,6 +98,6 @@ export class UserEntity extends BaseModel {
   @ManyToOne(() => TeamEntity, team => team.applicants)
   applyTeam: TeamEntity;
 
-  @OneToMany(() => CommentEntity, comment => comment.writer)
-  comments: CommentEntity<HasCommentsEntities>[];
+  @OneToMany(() => PostCommentEntity, comment => comment.writer)
+  comments: PostCommentEntity[];
 }
