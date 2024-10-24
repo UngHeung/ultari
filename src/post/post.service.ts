@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -99,6 +98,7 @@ export class PostService {
         writer: { id: user.id },
         id,
       },
+      relations: { writer: true },
     });
 
     if (!comment) {
@@ -193,6 +193,10 @@ export class PostService {
     writer: UserEntity,
     dto: { postId: number; content: string },
   ) {
+    if (!dto.content) {
+      throw new BadRequestException('댓글을 입력해주세요.');
+    }
+
     const post = await this.getPostById(dto.postId);
 
     const comment = this.postCommentRepository.create({
@@ -233,6 +237,11 @@ export class PostService {
           writer: true,
         },
       },
+      order: {
+        comments: {
+          createAt: 'DESC',
+        },
+      },
     });
   }
 
@@ -250,6 +259,25 @@ export class PostService {
         likers: true,
       },
     });
+  }
+
+  /**
+   * Base GET
+   * get comment by post id
+   */
+  async getCommentsByPostId(postId: number): Promise<PostCommentEntity[]> {
+    const comments = await this.postCommentRepository.find({
+      where: { id: postId },
+      relations: {
+        post: true,
+        writer: true,
+      },
+      select: {
+        post: { id: true },
+      },
+    });
+
+    return comments;
   }
 
   /**
