@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -250,6 +249,25 @@ export class PostService {
         likers: true,
       },
     });
+  }
+
+  /**
+   * Base GET
+   * get comment by post id
+   */
+  async getCommentsByPostId(postId: number): Promise<PostCommentEntity[]> {
+    const comments = await this.postCommentRepository.find({
+      where: { id: postId },
+      relations: {
+        post: true,
+        writer: true,
+      },
+      select: {
+        post: { id: true },
+      },
+    });
+
+    return comments;
   }
 
   /**
