@@ -101,7 +101,7 @@ export class PostController {
     return this.postService.getPostById(+id);
   }
 
-  @Get('/comment/:id')
+  @Get('/:id/comment/')
   @UseGuards(AccessTokenGuard)
   getAllCommentsByPostId(
     @Param('id') id: number,
@@ -131,7 +131,7 @@ export class PostController {
     return this.postService.updateLikes(req.user, id);
   }
 
-  @Patch('/:id/comment')
+  @Patch('/comment/:id')
   @UseGuards(AccessTokenGuard)
   updateComment(
     @Req() req,
