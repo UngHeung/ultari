@@ -98,6 +98,7 @@ export class PostService {
         writer: { id: user.id },
         id,
       },
+      relations: { writer: true },
     });
 
     if (!comment) {
