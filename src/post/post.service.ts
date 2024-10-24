@@ -193,6 +193,10 @@ export class PostService {
     writer: UserEntity,
     dto: { postId: number; content: string },
   ) {
+    if (!dto.content) {
+      throw new BadRequestException('댓글을 입력해주세요.');
+    }
+
     const post = await this.getPostById(dto.postId);
 
     const comment = this.postCommentRepository.create({
@@ -231,6 +235,11 @@ export class PostService {
         likers: true,
         comments: {
           writer: true,
+        },
+      },
+      order: {
+        comments: {
+          createAt: 'DESC',
         },
       },
     });
