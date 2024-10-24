@@ -101,10 +101,12 @@ export class PostController {
     return this.postService.getPostById(+id);
   }
 
-  @Get('/comment')
+  @Get('/comment/:id')
   @UseGuards(AccessTokenGuard)
-  getAllCommentsByPostId(): Promise<PostCommentEntity[]> {
-    return;
+  getAllCommentsByPostId(
+    @Param('id') id: number,
+  ): Promise<PostCommentEntity[]> {
+    return this.postService.getCommentsByPostId(id);
   }
 
   @Patch('/:id')
