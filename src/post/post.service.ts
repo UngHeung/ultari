@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -30,6 +31,61 @@ export class PostService {
     private readonly commonService: CommonService,
     private readonly awsService: AwsService,
   ) {}
+
+  async paginatePost(
+    take: number,
+    target: string,
+    order: 'ASC' | 'DESC',
+    cursor?: { id: number; value: number },
+  ): Promise<{
+    data: PostEntity[];
+    nextCursor: { id: number; value: number } | null;
+  }> {
+    const queryBuilder = this.postRepository
+      .createQueryBuilder('post')
+      .orderBy(`post.${target}`, order)
+      .addOrderBy('post.id', 'DESC')
+      .take(take + 1);
+
+    if (cursor) {
+      queryBuilder.where(
+        `(post.${target} ${order === 'ASC' ? '>' : '<'} ${cursor.value}) OR (post.${target} = ${cursor.value} AND post.id < ${cursor.id})`,
+        { value: cursor.value, id: cursor.id },
+      );
+    }
+
+    const posts = await queryBuilder.getMany();
+
+    const hasNextPage = posts.length > take;
+    const data = posts.slice(0, take);
+    const nextCursor = hasNextPage
+      ? { id: data[data.length - 1].id, value: data[data.length - 1][target] }
+      : null;
+
+    return { data, nextCursor };
+  }
+
+  /**
+   * # GET
+   * # Base
+   * # find Post by FindOneOptions
+   */
+  async getPostBase(
+    findOneOptions: FindOneOptions<PostEntity>,
+  ): Promise<PostEntity> {
+    try {
+      const post = await this.postRepository.findOne({ ...findOneOptions });
+
+      if (!post) {
+        throw new NotFoundException('게시물을 찾을 수 없습니다.');
+      }
+
+      return post;
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('서버에 문제가 발생했습니다.');
+    }
+  }
 
   /**
    * # GET
