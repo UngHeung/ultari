@@ -28,6 +28,42 @@ import { PostService } from './post.service';
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
+  @Get('/list')
+  async getPostList2() {
+    return this.postService.getPostList2();
+  }
+
+  @Get(':id/detail')
+  @UseGuards(AccessTokenGuard)
+  async getPostByIdTest(@Param('id') id: number) {
+    return this.postService.getPostDetailById(id);
+  }
+
+  @Get('/paginate')
+  async getPaginatePost(
+    @Query()
+    query: {
+      take: number;
+      target: string;
+      orderBy: 'ASC' | 'DESC';
+      id?: number;
+      value?: number;
+    },
+  ) {
+    const { take, target, orderBy, id, value } = query;
+    const cursor = {
+      id,
+      value,
+    };
+
+    return this.postService.paginatePost(
+      +take,
+      target,
+      orderBy,
+      id ? cursor : null,
+    );
+  }
+
   @Post('/')
   @UseGuards(AccessTokenGuard)
   async createPost(@Req() req, @Body() dto: CreatePostDto) {

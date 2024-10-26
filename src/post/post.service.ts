@@ -89,6 +89,67 @@ export class PostService {
 
   /**
    * # GET
+   * # find Post list and query builder
+   * # has author, author,profile
+   */
+  async getPostList2() {
+    const posts = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('author.profile', 'authorProfile')
+      .leftJoinAndSelect('author.team', 'authorTeam')
+      .select([
+        'post.id',
+        'post.title',
+        'post.content',
+        'post.likeCount',
+        'post.createAt',
+        'post.visibility',
+        'post.contentType',
+        'author.id',
+        'author.name',
+        'authorProfile.path',
+        'authorTeam.id',
+      ])
+      .getMany();
+
+    return posts;
+  }
+
+  /**
+   * # GET
+   * # find Post by id and query builder
+   * # has image, author, author.profile
+   */
+  async getPostDetailById(id: number): Promise<PostEntity> {
+    const post = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('author.profile', 'authorProfile')
+      .leftJoinAndSelect('post.images', 'images')
+      .select([
+        'post.id',
+        'post.title',
+        'author.id',
+        'author.name',
+        'authorProfile.id',
+        'authorProfile.path',
+        'images.id',
+        'images.order',
+        'images.path',
+      ])
+      .where('post.id = :id', { id })
+      .getOne();
+
+    if (!post) {
+      throw new NotFoundException('게시물을 찾을 수 없습니다.');
+    }
+
+    return post;
+  }
+
+  /**
+   * # GET
    * get post by post id
    */
   async getPostById(id: number): Promise<PostEntity> {
