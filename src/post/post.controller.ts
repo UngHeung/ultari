@@ -18,7 +18,6 @@ import { memoryStorage } from 'multer';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { ImageTypeEnum } from 'src/common/enum/image.enum';
 import { CreatePostDto } from './dto/create-post.dto';
-import { PaginatePostDto } from './dto/paginate-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostCommentEntity } from './entity/post-comment.entity';
 import { PostEntity } from './entity/post.entity';
@@ -27,6 +26,17 @@ import { PostService } from './post.service';
 @Controller('post')
 export class PostController {
   constructor(private readonly postService: PostService) {}
+
+  @Get('/list')
+  async getPostList2() {
+    return this.postService.getPostList2();
+  }
+
+  @Get(':id/detail')
+  @UseGuards(AccessTokenGuard)
+  async getPostByIdTest(@Param('id') id: number) {
+    return this.postService.getPostDetailById(id);
+  }
 
   @Post('/')
   @UseGuards(AccessTokenGuard)
@@ -81,14 +91,31 @@ export class PostController {
   }
 
   @Get('/')
-  getPosts(@Query() query: PaginatePostDto): Promise<{
+  async getPaginatePost(
+    @Query()
+    query: {
+      take: number;
+      orderBy: 'ASC' | 'DESC';
+      sort?: string;
+      id?: number;
+      value?: number;
+    },
+  ): Promise<{
     data: PostEntity[];
-    total?: number;
-    cursor?: { after: number };
-    count?: number;
-    next?: string;
+    nextCursor: { id: number; value: number };
   }> {
-    return this.postService.paginatePosts(query);
+    const { take, orderBy, sort, id, value } = query;
+    const cursor = {
+      id,
+      value,
+    };
+
+    return this.postService.cursorPaginatePost(
+      +take,
+      orderBy,
+      sort ?? 'createAt',
+      id ? cursor : null,
+    );
   }
 
   @Get('/find')

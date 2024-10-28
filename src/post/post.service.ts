@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -9,10 +10,8 @@ import { AwsService } from 'src/aws/aws.service';
 import { CommonService } from 'src/common/common.service';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
-import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { CreatePostDto } from './dto/create-post.dto';
-import { PaginatePostDto } from './dto/paginate-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostCommentEntity } from './entity/post-comment.entity';
 import { PostImageEntity } from './entity/post-image.entity';
@@ -30,6 +29,145 @@ export class PostService {
     private readonly commonService: CommonService,
     private readonly awsService: AwsService,
   ) {}
+
+  /**
+   * # GET
+   * # find Post list for paginate
+   */
+  async cursorPaginatePost(
+    take: number,
+    orderBy: 'ASC' | 'DESC',
+    sort: string,
+    cursor?: { id: number; value: number },
+  ): Promise<{
+    data: PostEntity[];
+    nextCursor: { id: number; value: number } | null;
+  }> {
+    const queryBuilder = this.commonService
+      .composeQueryBuilder<PostEntity>(
+        this.postRepository,
+        'post',
+        take,
+        orderBy,
+        sort,
+        cursor,
+      )
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('author.profile', 'authorProfile')
+      .leftJoinAndSelect('author.team', 'authorTeam')
+      .select([
+        'post.id',
+        'post.title',
+        'post.content',
+        'post.likeCount',
+        'post.createAt',
+        'post.visibility',
+        'post.contentType',
+        'author.id',
+        'author.name',
+        'authorProfile.path',
+        'authorTeam.id',
+      ]);
+
+    const dataList = await queryBuilder.getMany();
+
+    const hasNextPage = dataList.length > take;
+    const data = dataList.slice(0, take);
+    const nextCursor = hasNextPage
+      ? {
+          id: data[data.length - 1].id,
+          value: data[data.length - 1][sort],
+        }
+      : null;
+
+    return {
+      data,
+      nextCursor,
+    };
+  }
+
+  /**
+   * # GET
+   * # Base
+   * # find Post by FindOneOptions
+   */
+  async getPostBase(
+    findOneOptions: FindOneOptions<PostEntity>,
+  ): Promise<PostEntity> {
+    try {
+      const post = await this.postRepository.findOne({ ...findOneOptions });
+
+      if (!post) {
+        throw new NotFoundException('게시물을 찾을 수 없습니다.');
+      }
+
+      return post;
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('서버에 문제가 발생했습니다.');
+    }
+  }
+
+  /**
+   * # GET
+   * # find Post list and query builder
+   * # has author, author,profile
+   */
+  async getPostList2() {
+    const posts = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('author.profile', 'authorProfile')
+      .leftJoinAndSelect('author.team', 'authorTeam')
+      .select([
+        'post.id',
+        'post.title',
+        'post.content',
+        'post.likeCount',
+        'post.createAt',
+        'post.visibility',
+        'post.contentType',
+        'author.id',
+        'author.name',
+        'authorProfile.path',
+        'authorTeam.id',
+      ])
+      .getMany();
+
+    return posts;
+  }
+
+  /**
+   * # GET
+   * # find Post by id and query builder
+   * # has image, author, author.profile
+   */
+  async getPostDetailById(id: number): Promise<PostEntity> {
+    const post = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('author.profile', 'authorProfile')
+      .leftJoinAndSelect('post.images', 'images')
+      .select([
+        'post.id',
+        'post.title',
+        'author.id',
+        'author.name',
+        'authorProfile.id',
+        'authorProfile.path',
+        'images.id',
+        'images.order',
+        'images.path',
+      ])
+      .where('post.id = :id', { id })
+      .getOne();
+
+    if (!post) {
+      throw new NotFoundException('게시물을 찾을 수 없습니다.');
+    }
+
+    return post;
+  }
 
   /**
    * # GET
@@ -359,24 +497,6 @@ export class PostService {
     const deleteResponse = await this.postCommentRepository.remove(comment);
 
     return true;
-  }
-
-  /**
-   * # Base
-   */
-  async paginatePosts(dto: PaginatePostDto): Promise<{
-    data: PostEntity[];
-    total?: number;
-    cursor?: { after: number };
-    count?: number;
-    next?: string;
-  }> {
-    return this.commonService.paginate(
-      dto,
-      this.postRepository,
-      { ...POST_DEFAULT_FIND_OPTIONS },
-      'post',
-    );
   }
 
   /**
