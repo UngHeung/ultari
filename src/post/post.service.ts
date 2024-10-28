@@ -10,10 +10,8 @@ import { AwsService } from 'src/aws/aws.service';
 import { CommonService } from 'src/common/common.service';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
-import { POST_DEFAULT_FIND_OPTIONS } from './const/post-default-find-options.const';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { CreatePostDto } from './dto/create-post.dto';
-import { PaginatePostDto } from './dto/paginate-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostCommentEntity } from './entity/post-comment.entity';
 import { PostImageEntity } from './entity/post-image.entity';
@@ -32,37 +30,60 @@ export class PostService {
     private readonly awsService: AwsService,
   ) {}
 
-  async paginatePost(
+  /**
+   * # GET
+   * # find Post list for paginate
+   */
+  async cursorPaginatePost(
     take: number,
-    target: string,
-    order: 'ASC' | 'DESC',
+    orderBy: 'ASC' | 'DESC',
+    sort: string,
     cursor?: { id: number; value: number },
   ): Promise<{
     data: PostEntity[];
     nextCursor: { id: number; value: number } | null;
   }> {
-    const queryBuilder = this.postRepository
-      .createQueryBuilder('post')
-      .orderBy(`post.${target}`, order)
-      .addOrderBy('post.id', 'DESC')
-      .take(take + 1);
+    const queryBuilder = this.commonService
+      .composeQueryBuilder<PostEntity>(
+        this.postRepository,
+        'post',
+        take,
+        orderBy,
+        sort,
+        cursor,
+      )
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('author.profile', 'authorProfile')
+      .leftJoinAndSelect('author.team', 'authorTeam')
+      .select([
+        'post.id',
+        'post.title',
+        'post.content',
+        'post.likeCount',
+        'post.createAt',
+        'post.visibility',
+        'post.contentType',
+        'author.id',
+        'author.name',
+        'authorProfile.path',
+        'authorTeam.id',
+      ]);
 
-    if (cursor) {
-      queryBuilder.where(
-        `(post.${target} ${order === 'ASC' ? '>' : '<'} ${cursor.value}) OR (post.${target} = ${cursor.value} AND post.id < ${cursor.id})`,
-        { value: cursor.value, id: cursor.id },
-      );
-    }
+    const dataList = await queryBuilder.getMany();
 
-    const posts = await queryBuilder.getMany();
-
-    const hasNextPage = posts.length > take;
-    const data = posts.slice(0, take);
+    const hasNextPage = dataList.length > take;
+    const data = dataList.slice(0, take);
     const nextCursor = hasNextPage
-      ? { id: data[data.length - 1].id, value: data[data.length - 1][target] }
+      ? {
+          id: data[data.length - 1].id,
+          value: data[data.length - 1][sort],
+        }
       : null;
 
-    return { data, nextCursor };
+    return {
+      data,
+      nextCursor,
+    };
   }
 
   /**
@@ -476,24 +497,6 @@ export class PostService {
     const deleteResponse = await this.postCommentRepository.remove(comment);
 
     return true;
-  }
-
-  /**
-   * # Base
-   */
-  async paginatePosts(dto: PaginatePostDto): Promise<{
-    data: PostEntity[];
-    total?: number;
-    cursor?: { after: number };
-    count?: number;
-    next?: string;
-  }> {
-    return this.commonService.paginate(
-      dto,
-      this.postRepository,
-      { ...POST_DEFAULT_FIND_OPTIONS },
-      'post',
-    );
   }
 
   /**
