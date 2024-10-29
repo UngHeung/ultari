@@ -5,7 +5,6 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { extname } from 'path';
 import { v4 as uuid } from 'uuid';
 
@@ -13,7 +12,7 @@ import { v4 as uuid } from 'uuid';
 export class AwsService {
   s3Client: S3Client;
 
-  constructor(private configService: ConfigService) {
+  constructor() {
     this.s3Client = new S3Client({
       region: process.env.AWS_REGION,
       credentials: {
@@ -61,20 +60,24 @@ export class AwsService {
   async moveImage(currentKey: string, newKey: string) {
     const bucketName = process.env.AWS_S3_BUCKET_NAME;
 
-    const moveResponse = await this.s3Client.send(
-      new CopyObjectCommand({
-        Bucket: bucketName,
-        CopySource: `${bucketName}/${currentKey}`,
-        Key: newKey,
-      }),
-    );
+    try {
+      const moveResponse = await this.s3Client.send(
+        new CopyObjectCommand({
+          Bucket: bucketName,
+          CopySource: `${bucketName}/${currentKey}`,
+          Key: newKey,
+        }),
+      );
 
-    const deleteResponse = await this.deleteImage(currentKey);
+      const deleteResponse = await this.deleteImage(currentKey);
 
-    return {
-      moveResponse,
-      deleteResponse,
-    };
+      return {
+        moveResponse,
+        deleteResponse,
+      };
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async deleteImage(currentKey: string) {
