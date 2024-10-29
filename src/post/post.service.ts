@@ -9,7 +9,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AwsService } from 'src/aws/aws.service';
 import { CommonService } from 'src/common/common.service';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindManyOptions,
+  FindOneOptions,
+  Repository,
+} from 'typeorm';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -28,6 +33,7 @@ export class PostService {
     private readonly postCommentRepository: Repository<PostCommentEntity>,
     private readonly commonService: CommonService,
     private readonly awsService: AwsService,
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
@@ -313,14 +319,30 @@ export class PostService {
    * create post image
    */
   async createPostImage(dto: CreatePostImageDto) {
-    const currentPath = `public/images/temp/${dto.path}`;
-    const result = this.postImageRepository.save(dto);
-    await this.awsService.moveImage(
-      currentPath,
-      `public/images/post/${dto.path}`,
-    );
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    return result;
+    const currentPath = `public/images/temp/${dto.path}`;
+
+    try {
+      const result = this.postImageRepository.save(dto);
+
+      await this.awsService.moveImage(
+        currentPath,
+        `public/images/post/${dto.path}`,
+      );
+
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (error) {
+      console.error(error);
+
+      await this.awsService.deleteImage(currentPath);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   /**
