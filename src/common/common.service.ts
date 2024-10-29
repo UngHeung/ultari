@@ -46,10 +46,7 @@ export class CommonService {
   }
 
   /**
-   * @param path
-   * @param fileName
-   * 1. find current profile by received file path and file name
-   * 2. delete current profile
+   * file remove from S3 bucket
    */
   async removeFile(path: string, fileName: string) {
     const removeFilePath = join(path, fileName);
@@ -60,10 +57,7 @@ export class CommonService {
   }
 
   /**
-   * @param currentPath
-   * @param newPath
-   * @param fileName
-   * 1. move file to new folder from current folder
+   * file move from folder in S3 bucket
    */
   async renameFile(currentPath: string, newPath: string, fileName: string) {
     const renameFilePath = join(currentPath, fileName);
