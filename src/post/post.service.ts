@@ -13,6 +13,7 @@ import {
   DataSource,
   FindManyOptions,
   FindOneOptions,
+  QueryBuilder,
   Repository,
 } from 'typeorm';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
@@ -192,9 +193,19 @@ export class PostService {
    * find post by keywords
    */
   async findPostList(keywords: string): Promise<PostEntity[]> {
-    const postList = await this.getPostList({
-      where: [{ title: `%${keywords}%` }, { content: `%${keywords}%` }],
-    });
+    if (keywords.length < 2) return;
+    console.log(keywords);
+    console.log(keywords.length);
+
+    const queryBuilder = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .select(['post.id', 'post.title', 'post.content', 'post.likeCount'])
+      .where('post.title ILIKE :keyword OR post.content ILIKE :keyword', {
+        keyword: `%${keywords}%`,
+      });
+
+    const postList = await queryBuilder.getMany();
 
     return postList;
   }
