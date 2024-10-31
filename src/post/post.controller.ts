@@ -28,8 +28,8 @@ export class PostController {
   constructor(private readonly postService: PostService) {}
 
   @Get('/list')
-  async getPostList2() {
-    return this.postService.getPostList2();
+  async getPostList() {
+    return this.postService.getPostList();
   }
 
   @Get(':id/detail')

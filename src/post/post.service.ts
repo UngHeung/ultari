@@ -120,7 +120,7 @@ export class PostService {
    * # find Post list and query builder
    * # has author, author,profile
    */
-  async getPostList2() {
+  async getPostList() {
     const posts = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
@@ -194,13 +194,18 @@ export class PostService {
    */
   async findPostList(keywords: string): Promise<PostEntity[]> {
     if (keywords.length < 2) return;
-    console.log(keywords);
-    console.log(keywords.length);
 
     const queryBuilder = this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
-      .select(['post.id', 'post.title', 'post.content', 'post.likeCount'])
+      .select([
+        'post.id',
+        'post.title',
+        'post.content',
+        'post.likeCount',
+        'author.id',
+        'author.name',
+      ])
       .where('post.title ILIKE :keyword OR post.content ILIKE :keyword', {
         keyword: `%${keywords}%`,
       });
@@ -412,22 +417,6 @@ export class PostService {
         comments: {
           createAt: 'DESC',
         },
-      },
-    });
-  }
-
-  /**
-   * # Base GET
-   * get post list
-   */
-  async getPostList(
-    findManyOptions: FindManyOptions<PostEntity>,
-  ): Promise<PostEntity[]> {
-    return await this.postRepository.find({
-      ...findManyOptions,
-      relations: {
-        author: { profile: true },
-        likers: true,
       },
     });
   }
