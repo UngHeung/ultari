@@ -9,13 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AwsService } from 'src/aws/aws.service';
 import { CommonService } from 'src/common/common.service';
 import { UserEntity } from 'src/user/entity/user.entity';
-import {
-  DataSource,
-  FindManyOptions,
-  FindOneOptions,
-  QueryBuilder,
-  Repository,
-} from 'typeorm';
+import { DataSource, FindOneOptions, Repository } from 'typeorm';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -193,7 +187,7 @@ export class PostService {
    * find post by keywords
    */
   async findPostList(keywords: string): Promise<PostEntity[]> {
-    if (keywords.length < 2) return;
+    if (keywords.trim().length < 2) return;
 
     const queryBuilder = this.postRepository
       .createQueryBuilder('post')
