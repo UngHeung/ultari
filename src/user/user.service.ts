@@ -282,13 +282,11 @@ export class UserService {
           `public/images/profile/${user.profile.path}`,
           `public/images/temp/${user.profile.path}`,
         );
-
-        user.profile.path = dto.profilePath;
-      } else {
-        const profile = this.createUserProfile(user, dto.profilePath);
-
-        user.profile = profile;
       }
+
+      const profile = this.createUserProfile(user, dto.profilePath);
+
+      user.profile = profile;
     }
 
     return await this.userRepository.save(user);
