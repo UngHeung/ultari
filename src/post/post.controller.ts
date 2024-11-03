@@ -32,10 +32,9 @@ export class PostController {
     return this.postService.getPostList();
   }
 
-  @Get(':id/detail')
-  @UseGuards(AccessTokenGuard)
-  async getPostByIdTest(@Param('id') id: number) {
-    return this.postService.getPostDetailById(id);
+  @Get('/:id/detail/')
+  async getPostByIdTest(@Param('id') id: string) {
+    return this.postService.getPostDetailById(+id);
   }
 
   @Post('/')
@@ -52,7 +51,7 @@ export class PostController {
       });
     }
 
-    return await this.postService.getPostById(post.id);
+    return await this.postService.getPostDetailById(post.id);
   }
 
   @Post('/image')
@@ -121,11 +120,6 @@ export class PostController {
   @Get('/find')
   findPosts(@Query() query: { keyword: string }): Promise<PostEntity[]> {
     return this.postService.findPostList(query.keyword);
-  }
-
-  @Get('/:id')
-  getPostById(@Param('id') id: string) {
-    return this.postService.getPostById(+id);
   }
 
   @Get('/:id/comment/')
