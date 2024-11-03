@@ -43,7 +43,7 @@ export class PostService {
     data: PostEntity[];
     nextCursor: { id: number; value: number } | null;
   }> {
-    const queryBuilder = this.commonService
+    const dataList = await this.commonService
       .composeQueryBuilder<PostEntity>(
         this.postRepository,
         'post',
@@ -67,9 +67,8 @@ export class PostService {
         'author.name',
         'authorProfile.path',
         'authorTeam.id',
-      ]);
-
-    const dataList = await queryBuilder.getMany();
+      ])
+      .getMany();
 
     const hasNextPage = dataList.length > take;
     const data = dataList.slice(0, take);
@@ -180,7 +179,7 @@ export class PostService {
   async findPostList(keywords: string): Promise<PostEntity[]> {
     if (keywords.trim().length < 2) return;
 
-    const queryBuilder = this.postRepository
+    const postList = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .select([
@@ -193,9 +192,8 @@ export class PostService {
       ])
       .where('post.title ILIKE :keyword OR post.content ILIKE :keyword', {
         keyword: `%${keywords}%`,
-      });
-
-    const postList = await queryBuilder.getMany();
+      })
+      .getMany();
 
     return postList;
   }
@@ -260,13 +258,12 @@ export class PostService {
    * update view count
    */
   async getPostForViews(id: number): Promise<PostEntity> {
-    const queryBuilder = this.postRepository
+    const post = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .select(['post.id', 'post.viewCount', 'author.id'])
-      .where('post.id = :id', { id });
-
-    const post = await queryBuilder.getOne();
+      .where('post.id = :id', { id })
+      .getOne();
 
     return post;
   }
@@ -285,14 +282,13 @@ export class PostService {
    * update like count
    */
   async updateLikes(user: UserEntity, id: number): Promise<number> {
-    const queryBuilder = this.postRepository
+    const post = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .leftJoinAndSelect('post.likers', 'likers')
       .select(['post.id', 'author.id', 'likers.id'])
-      .where('post.id = :id', { id });
-
-    const post = await queryBuilder.getOne();
+      .where('post.id = :id', { id })
+      .getOne();
 
     if (user.id === post.author.id) {
       throw new BadRequestException(
@@ -334,6 +330,7 @@ export class PostService {
    */
   async createPostImage(dto: CreatePostImageDto) {
     const queryRunner = this.dataSource.createQueryRunner();
+
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -435,7 +432,7 @@ export class PostService {
    * get comment by post id
    */
   async getCommentsByPostId(postId: number): Promise<PostCommentEntity[]> {
-    const queryBuilder = this.postCommentRepository
+    const comments = await this.postCommentRepository
       .createQueryBuilder('comments')
       .leftJoinAndSelect('comments.post', 'post')
       .leftJoinAndSelect('comments.writer', 'writer')
@@ -451,9 +448,8 @@ export class PostService {
         'post.id',
       ])
       .where('post.id = :id', { id: postId })
-      .orderBy('comments.id', 'DESC');
-
-    const comments = queryBuilder.getMany();
+      .orderBy('comments.id', 'DESC')
+      .getMany();
 
     return comments;
   }
