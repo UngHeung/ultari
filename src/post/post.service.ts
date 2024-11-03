@@ -85,6 +85,57 @@ export class PostService {
     };
   }
 
+  async cursorPaginateComment(
+    postId: number,
+    take: number,
+    cursor?: { id: number; value: number },
+  ): Promise<{
+    data: PostCommentEntity[];
+    nextCursor: { id: number; value: number } | null;
+  }> {
+    const dataList = await this.commonService
+      .composeQueryBuilder<PostCommentEntity>(
+        this.postCommentRepository,
+        'comments',
+        take,
+        'DESC',
+        'id',
+        cursor,
+        { postId },
+      )
+      .leftJoinAndSelect('comments.post', 'post')
+      .leftJoinAndSelect('comments.writer', 'writer')
+      .leftJoinAndSelect('writer.profile', 'writerProfile')
+      .select([
+        'comments.id',
+        'comments.content',
+        'comments.createAt',
+        'writer.id',
+        'writer.name',
+        'writerProfile.id',
+        'writerProfile.path',
+        'post.id',
+      ])
+      .getMany();
+
+    const hasNextPage = dataList.length > take;
+    const data = dataList.slice(0, take);
+    const nextCursor = hasNextPage
+      ? {
+          id: data[data.length - 1].id,
+          value: data[data.length - 1].id,
+        }
+      : null;
+
+    console.log(data);
+    console.log(nextCursor);
+
+    return {
+      data,
+      nextCursor,
+    };
+  }
+
   /**
    * # GET
    * # find Post list and query builder

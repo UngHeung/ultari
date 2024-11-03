@@ -109,10 +109,36 @@ export class PostController {
       value,
     };
 
-    return this.postService.cursorPaginatePost(
+    return await this.postService.cursorPaginatePost(
       +take,
       orderBy,
       sort ?? 'createAt',
+      id ? cursor : null,
+    );
+  }
+
+  @Get('/:id/comments')
+  async getPaginateComment(
+    @Query()
+    query: {
+      take: number;
+      id?: number;
+      value?: number;
+    },
+    @Param('id') postId: string,
+  ): Promise<{
+    data: PostCommentEntity[];
+    nextCursor: { id: number; value: number };
+  }> {
+    const { take, id, value } = query;
+    const cursor = {
+      id,
+      value,
+    };
+
+    return await this.postService.cursorPaginateComment(
+      +postId,
+      +take,
       id ? cursor : null,
     );
   }
