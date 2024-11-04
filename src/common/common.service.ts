@@ -22,11 +22,14 @@ export class CommonService {
    */
   composeQueryBuilder<T extends BaseModel>(
     repository: Repository<T>,
-    target: 'user' | 'post' | 'comment',
+    target: 'user' | 'post' | 'comments',
     take: number,
     orderBy: 'ASC' | 'DESC',
     sort: string,
-    cursor: { id: number; value: number },
+    cursor: { id: number; value?: number },
+    where?: {
+      postId: number;
+    },
   ): SelectQueryBuilder<T> {
     const queryBuilder = repository
       .createQueryBuilder(target)
@@ -35,11 +38,21 @@ export class CommonService {
       .take(take + 1);
 
     if (cursor) {
-      const compareValueQuery = `(${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} ${cursor.value}) OR (${target}.${sort} = ${cursor.value}`;
-      const compareIdQuery = `${target}.id ${sort.includes('id') && orderBy === 'DESC' ? '<' : '>'} ${cursor.id})`;
-      const query = `${compareValueQuery} AND ${compareIdQuery}`;
+      if (cursor.value) {
+        const compareValueQuery = `(${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} ${cursor.value}) OR (${target}.${sort} = ${cursor.value}`;
+        const compareIdQuery = `${target}.id ${sort.includes('id') && orderBy === 'DESC' ? '<' : '>'} ${cursor.id})`;
+        const query = `${compareValueQuery} AND ${compareIdQuery}`;
 
-      queryBuilder.where(query, { value: cursor.value, id: cursor.id });
+        queryBuilder.where(query, { value: cursor.value, id: cursor.id });
+      } else {
+        const query = `${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} ${cursor.id}`;
+
+        queryBuilder.where(query, { id: cursor.id });
+      }
+    }
+
+    if (where) {
+      queryBuilder.andWhere('post.id = :id', { id: where.postId });
     }
 
     return queryBuilder;
