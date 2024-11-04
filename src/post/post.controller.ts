@@ -18,6 +18,7 @@ import { memoryStorage } from 'multer';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { ImageTypeEnum } from 'src/common/enum/image.enum';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { PostCommentEntity } from './entity/post-comment.entity';
 import { PostEntity } from './entity/post.entity';
 import { PostService } from './post.service';
@@ -114,7 +115,10 @@ export class PostController {
    */
   @Post('/')
   @UseGuards(AccessTokenGuard)
-  async createPost(@Req() req, @Body() dto: CreatePostDto) {
+  async createPost(
+    @Req() req,
+    @Body() dto: CreatePostDto,
+  ): Promise<PostEntity> {
     const post = await this.postService.createPost(req.user, dto);
 
     for (let i = 0; i < dto.images.length; i++) {
@@ -184,6 +188,20 @@ export class PostController {
   @UseGuards(AccessTokenGuard)
   increaseViews(@Req() req, @Param('id') id: string): Promise<void> {
     return this.postService.increaseViews(req.user.id, +id);
+  }
+
+  /**
+   * # PATCH
+   * update post
+   */
+  @Patch('/:id')
+  @UseGuards(AccessTokenGuard)
+  updatePost(
+    @Req() req,
+    @Param('id') id: number,
+    @Body() dto: UpdatePostDto,
+  ): Promise<PostEntity> {
+    return this.postService.updatePost(req.user, +id, dto);
   }
 
   /**
