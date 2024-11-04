@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -33,60 +34,9 @@ export class PostController {
   }
 
   @Get('/:id/detail/')
-  async getPostByIdTest(@Param('id') id: string) {
+  async getPostById(@Param('id') id: string) {
+    Logger.log(id);
     return this.postService.getPostDetailById(+id);
-  }
-
-  @Post('/')
-  @UseGuards(AccessTokenGuard)
-  async createPost(@Req() req, @Body() dto: CreatePostDto) {
-    const post = await this.postService.createPost(req.user, dto);
-
-    for (let i = 0; i < dto.images.length; i++) {
-      await this.postService.createPostImage({
-        post,
-        order: i,
-        path: dto.images[i],
-        type: ImageTypeEnum.POST_IMAGE,
-      });
-    }
-
-    return await this.postService.getPostDetailById(post.id);
-  }
-
-  @Post('/image')
-  @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
-  async uploadImage(
-    @UploadedFile() file: Express.Multer.File,
-  ): Promise<{ fileName: string }> {
-    const { fileName } = await this.postService.saveImage(file);
-    return { fileName };
-  }
-
-  @Post('/images')
-  @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FilesInterceptor('images', 3, { storage: memoryStorage() }))
-  async uploadImages(
-    @UploadedFiles() files: Express.Multer.File[],
-  ): Promise<{ fileNames: string[] }> {
-    const fileNames = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const data = await this.postService.saveImage(files[i]);
-      fileNames.push(data.fileName);
-    }
-
-    return { fileNames };
-  }
-
-  @Post('/comment')
-  @UseGuards(AccessTokenGuard)
-  async createComment(
-    @Req() req,
-    @Body() dto: { postId: number; content: string },
-  ): Promise<PostCommentEntity> {
-    return this.postService.createComment(req.user, dto);
   }
 
   @Get('/')
@@ -141,6 +91,58 @@ export class PostController {
       +take,
       id ? cursor : null,
     );
+  }
+
+  @Post('/')
+  @UseGuards(AccessTokenGuard)
+  async createPost(@Req() req, @Body() dto: CreatePostDto) {
+    const post = await this.postService.createPost(req.user, dto);
+
+    for (let i = 0; i < dto.images.length; i++) {
+      await this.postService.createPostImage({
+        post,
+        order: i,
+        path: dto.images[i],
+        type: ImageTypeEnum.POST_IMAGE,
+      });
+    }
+
+    return await this.postService.getPostDetailById(post.id);
+  }
+
+  @Post('/image')
+  @UseGuards(AccessTokenGuard)
+  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ fileName: string }> {
+    const { fileName } = await this.postService.saveImage(file);
+    return { fileName };
+  }
+
+  @Post('/images')
+  @UseGuards(AccessTokenGuard)
+  @UseInterceptors(FilesInterceptor('images', 3, { storage: memoryStorage() }))
+  async uploadImages(
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<{ fileNames: string[] }> {
+    const fileNames = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const data = await this.postService.saveImage(files[i]);
+      fileNames.push(data.fileName);
+    }
+
+    return { fileNames };
+  }
+
+  @Post('/comment')
+  @UseGuards(AccessTokenGuard)
+  async createComment(
+    @Req() req,
+    @Body() dto: { postId: number; content: string },
+  ): Promise<PostCommentEntity> {
+    return this.postService.createComment(req.user, dto);
   }
 
   @Get('/find')

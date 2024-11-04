@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -43,7 +44,8 @@ export class PostService {
     data: PostEntity[];
     nextCursor: { id: number; value: number } | null;
   }> {
-    console.log(take);
+    Logger.log(typeof take);
+    Logger.log('take : ', take);
     const dataList = await this.commonService
       .composeQueryBuilder<PostEntity>(
         this.postRepository,
