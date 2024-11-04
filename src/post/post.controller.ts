@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  Logger,
   Param,
   Patch,
   Post,
@@ -19,7 +18,6 @@ import { memoryStorage } from 'multer';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { ImageTypeEnum } from 'src/common/enum/image.enum';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
 import { PostCommentEntity } from './entity/post-comment.entity';
 import { PostEntity } from './entity/post.entity';
 import { PostService } from './post.service';
@@ -28,17 +26,29 @@ import { PostService } from './post.service';
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  @Get('/list')
-  async getPostList() {
-    return this.postService.getPostList();
-  }
-
+  /**
+   * # GET
+   * get post detail
+   */
   @Get('/:id/detail/')
   async getPostById(@Param('id') id: string) {
-    Logger.log(id);
     return this.postService.getPostDetailById(+id);
   }
 
+  /**
+   * # GET
+   * find post list by keyword
+   */
+  @Get('/find')
+  findPosts(@Query() query: { keyword: string }): Promise<PostEntity[]> {
+    return this.postService.findPostList(query.keyword);
+  }
+
+  /**
+   * # GET
+   * post paginate
+   * get post list
+   */
   @Get('/')
   async getPaginatePost(
     @Query()
@@ -60,13 +70,18 @@ export class PostController {
     };
 
     return await this.postService.cursorPaginatePost(
-      typeof +take === 'number' ? +take : 10,
+      +take,
       orderBy,
       sort ?? 'createAt',
       id ? cursor : null,
     );
   }
 
+  /**
+   * # GET
+   * comment paginate
+   * get comment list by post id
+   */
   @Get('/:id/comments')
   async getPaginateComment(
     @Query()
@@ -93,6 +108,10 @@ export class PostController {
     );
   }
 
+  /**
+   * # POST
+   * create new post
+   */
   @Post('/')
   @UseGuards(AccessTokenGuard)
   async createPost(@Req() req, @Body() dto: CreatePostDto) {
@@ -110,6 +129,10 @@ export class PostController {
     return await this.postService.getPostDetailById(post.id);
   }
 
+  /**
+   * # POST
+   * create new image
+   */
   @Post('/image')
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
@@ -120,6 +143,10 @@ export class PostController {
     return { fileName };
   }
 
+  /**
+   * # POST
+   * create new image list
+   */
   @Post('/images')
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FilesInterceptor('images', 3, { storage: memoryStorage() }))
@@ -136,6 +163,10 @@ export class PostController {
     return { fileNames };
   }
 
+  /**
+   * # POST
+   * create new comment
+   */
   @Post('/comment')
   @UseGuards(AccessTokenGuard)
   async createComment(
@@ -145,60 +176,57 @@ export class PostController {
     return this.postService.createComment(req.user, dto);
   }
 
-  @Get('/find')
-  findPosts(@Query() query: { keyword: string }): Promise<PostEntity[]> {
-    return this.postService.findPostList(query.keyword);
-  }
-
-  @Get('/:id/comment/')
-  @UseGuards(AccessTokenGuard)
-  getAllCommentsByPostId(
-    @Param('id') id: number,
-  ): Promise<PostCommentEntity[]> {
-    return this.postService.getCommentsByPostId(id);
-  }
-
-  @Patch('/:id')
-  @UseGuards(AccessTokenGuard)
-  updatePost(
-    @Req() req,
-    @Param('id') id: number,
-    @Body() dto: UpdatePostDto,
-  ): Promise<PostEntity> {
-    return this.postService.updatePost(req.user, id, dto);
-  }
-
+  /**
+   * # PATCH
+   * increase views
+   */
   @Patch('/:id/views')
   @UseGuards(AccessTokenGuard)
-  increaseViews(@Req() req, @Param('id') id: number): Promise<void> {
-    return this.postService.increaseViews(req.user.id, id);
+  increaseViews(@Req() req, @Param('id') id: string): Promise<void> {
+    return this.postService.increaseViews(req.user.id, +id);
   }
 
+  /**
+   * # PATCH
+   * update like count
+   */
   @Patch('/:id/likes')
   @UseGuards(AccessTokenGuard)
-  updateLikes(@Req() req, @Param('id') id: number): Promise<number> {
-    return this.postService.updateLikes(req.user, id);
+  updateLikes(@Req() req, @Param('id') id: string): Promise<number> {
+    return this.postService.updateLikes(req.user, +id);
   }
 
+  /**
+   * # PATCH
+   * update comment
+   */
   @Patch('/comment/:id')
   @UseGuards(AccessTokenGuard)
   updateComment(
     @Req() req,
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Body() dto: { content: string },
   ): Promise<PostCommentEntity> {
-    return this.postService.updateComment(req.user, id, dto);
+    return this.postService.updateComment(req.user, +id, dto);
   }
 
+  /**
+   * # Delete
+   * delete post
+   */
   @Delete('/:id')
   @UseGuards(AccessTokenGuard)
-  deletePost(@Req() req, @Param('id') id: number): Promise<boolean> {
-    return this.postService.deletePost(req.user, id);
+  deletePost(@Req() req, @Param('id') id: string): Promise<boolean> {
+    return this.postService.deletePost(req.user, +id);
   }
 
+  /**
+   * # DELETE
+   * delete comment
+   */
   @Delete('/comment/:id')
   @UseGuards(AccessTokenGuard)
-  deleteComment(@Req() req, @Param('id') id: number): Promise<boolean> {
-    return this.postService.deleteComment(req.user, id);
+  deleteComment(@Req() req, @Param('id') id: string): Promise<boolean> {
+    return this.postService.deleteComment(req.user, +id);
   }
 }
