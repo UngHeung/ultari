@@ -110,7 +110,7 @@ export class PostController {
     };
 
     return await this.postService.cursorPaginatePost(
-      +take,
+      typeof +take === 'number' ? +take : 10,
       orderBy,
       sort ?? 'createAt',
       id ? cursor : null,
