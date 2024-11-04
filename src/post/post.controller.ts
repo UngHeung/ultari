@@ -66,7 +66,7 @@ export class PostController {
 
   @Post('/images')
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FilesInterceptor('images', 5, { storage: memoryStorage() }))
+  @UseInterceptors(FilesInterceptor('images', 3, { storage: memoryStorage() }))
   async uploadImages(
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<{ fileNames: string[] }> {
