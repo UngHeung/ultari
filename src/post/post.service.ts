@@ -127,9 +127,6 @@ export class PostService {
         }
       : null;
 
-    console.log(data);
-    console.log(nextCursor);
-
     return {
       data,
       nextCursor,
@@ -414,8 +411,7 @@ export class PostService {
   async getPostForComment(id: number): Promise<PostEntity> {
     const post = await this.postRepository
       .createQueryBuilder('post')
-      .leftJoinAndSelect('post.comments', 'comments')
-      .select('post.id', 'comments.id')
+      .select('post.id')
       .where('post.id = :id', { id })
       .getOne();
 
