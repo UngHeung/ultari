@@ -32,7 +32,8 @@ export class PostService {
 
   /**
    * # GET
-   * # find Post list for paginate
+   * post paginate
+   * get post list
    */
   async cursorPaginatePost(
     take: number,
@@ -85,6 +86,11 @@ export class PostService {
     };
   }
 
+  /**
+   * # GET
+   * comment paginate
+   * get comment list
+   */
   async cursorPaginateComment(
     postId: number,
     take: number,
@@ -135,8 +141,9 @@ export class PostService {
 
   /**
    * # GET
-   * # find Post list and query builder
-   * # has author, author,profile
+   * - temp
+   * find Post list and query builder
+   * has author, author,profile
    */
   async getPostList() {
     const posts = await this.postRepository
@@ -164,8 +171,7 @@ export class PostService {
 
   /**
    * # GET
-   * # find Post by id and query builder
-   * # has image, author, author.profile
+   * get post detail
    */
   async getPostDetailById(id: number): Promise<PostEntity> {
     const post = await this.postRepository
@@ -181,6 +187,8 @@ export class PostService {
         'post.contentType',
         'post.visibility',
         'post.likeCount',
+        'images.id',
+        'images.path',
         'author.id',
         'author.name',
         'authorProfile.path',
@@ -255,14 +263,19 @@ export class PostService {
     id: number,
     dto: UpdatePostDto,
   ): Promise<PostEntity> {
-    const post = await this.getPostForUpdate({
-      where: {
-        author: { id: user.id },
-        id,
-      },
-    });
+    const post = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('post.images', 'images')
+      .select(['post.id', 'author.id', 'images.id', 'images.path'])
+      .where('post.id = :id', { id })
+      .getOne();
 
     if (!post) {
+      throw new NotFoundException('게시물을 찾을 수 없습니다.');
+    }
+
+    if (user.id !== post.author.id) {
       throw new UnauthorizedException('본인의 게시물이 아닙니다.');
     }
 
@@ -276,7 +289,7 @@ export class PostService {
   }
 
   /**
-   * async # Patch
+   * # PATCH
    * update comment
    */
   async updateComment(
@@ -302,7 +315,7 @@ export class PostService {
   }
 
   /**
-   * # Patch
+   * # PATCH
    * update view count
    */
   async getPostForViews(id: number): Promise<PostEntity> {
@@ -346,7 +359,7 @@ export class PostService {
 
     const exists = this.existsUserInLikers(user.id, post);
 
-    post.likers = await this.addOrDeletePostLikers(user, post, !exists);
+    post.likers = await this.togglePostLikers(user, post, !exists);
     post.likeCount = post.likers.length;
 
     await this.postRepository.save(post);
@@ -435,18 +448,6 @@ export class PostService {
     });
 
     return await this.postCommentRepository.save(comment);
-  }
-
-  /**
-   * # Base GET
-   * get post simple data
-   */
-  async getPostForUpdate(findOneOptions: FindOneOptions) {
-    return await this.postRepository.findOne({
-      ...findOneOptions,
-      relations: { author: true, images: true },
-      select: { author: { id: true } },
-    });
   }
 
   /**
@@ -577,7 +578,7 @@ export class PostService {
       throw new UnauthorizedException('자신의 댓글만 삭제가 가능합니다.');
     }
 
-    const deleteResponse = await this.postCommentRepository.remove(comment);
+    this.postCommentRepository.remove(comment);
 
     return true;
   }
@@ -592,7 +593,7 @@ export class PostService {
   /**
    * # Base
    */
-  async addOrDeletePostLikers(
+  async togglePostLikers(
     user: UserEntity,
     post: PostEntity,
     isSaved: boolean,

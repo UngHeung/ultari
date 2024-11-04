@@ -16,9 +16,9 @@ export class CommonService {
   ) {}
 
   /**
-   * target : entity name
-   * order : property
-   * orderBy : order type ASC or DESC
+   * - target : entity name
+   * - orderBy : order type ASC or DESC
+   * - sort : likes, views
    */
   composeQueryBuilder<T extends BaseModel>(
     repository: Repository<T>,
@@ -59,7 +59,7 @@ export class CommonService {
   }
 
   /**
-   * file remove from S3 bucket
+   * remove file from S3 bucket
    */
   async removeFile(path: string, fileName: string) {
     const removeFilePath = join(path, fileName);
@@ -70,7 +70,7 @@ export class CommonService {
   }
 
   /**
-   * file move from folder in S3 bucket
+   * move file from folder in S3 bucket
    */
   async renameFile(currentPath: string, newPath: string, fileName: string) {
     const renameFilePath = join(currentPath, fileName);
