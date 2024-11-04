@@ -32,10 +32,9 @@ export class PostController {
     return this.postService.getPostList();
   }
 
-  @Get(':id/detail')
-  @UseGuards(AccessTokenGuard)
-  async getPostByIdTest(@Param('id') id: number) {
-    return this.postService.getPostDetailById(id);
+  @Get('/:id/detail/')
+  async getPostByIdTest(@Param('id') id: string) {
+    return this.postService.getPostDetailById(+id);
   }
 
   @Post('/')
@@ -52,7 +51,7 @@ export class PostController {
       });
     }
 
-    return await this.postService.getPostById(post.id);
+    return await this.postService.getPostDetailById(post.id);
   }
 
   @Post('/image')
@@ -67,7 +66,7 @@ export class PostController {
 
   @Post('/images')
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FilesInterceptor('images', 5, { storage: memoryStorage() }))
+  @UseInterceptors(FilesInterceptor('images', 3, { storage: memoryStorage() }))
   async uploadImages(
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<{ fileNames: string[] }> {
@@ -110,7 +109,7 @@ export class PostController {
       value,
     };
 
-    return this.postService.cursorPaginatePost(
+    return await this.postService.cursorPaginatePost(
       +take,
       orderBy,
       sort ?? 'createAt',
@@ -118,14 +117,35 @@ export class PostController {
     );
   }
 
+  @Get('/:id/comments')
+  async getPaginateComment(
+    @Query()
+    query: {
+      take: number;
+      id?: number;
+      value?: number;
+    },
+    @Param('id') postId: string,
+  ): Promise<{
+    data: PostCommentEntity[];
+    nextCursor: { id: number; value: number };
+  }> {
+    const { take, id, value } = query;
+    const cursor = {
+      id,
+      value,
+    };
+
+    return await this.postService.cursorPaginateComment(
+      +postId,
+      +take,
+      id ? cursor : null,
+    );
+  }
+
   @Get('/find')
   findPosts(@Query() query: { keyword: string }): Promise<PostEntity[]> {
     return this.postService.findPostList(query.keyword);
-  }
-
-  @Get('/:id')
-  getPostById(@Param('id') id: string) {
-    return this.postService.getPostById(+id);
   }
 
   @Get('/:id/comment/')

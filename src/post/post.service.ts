@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -44,7 +43,7 @@ export class PostService {
     data: PostEntity[];
     nextCursor: { id: number; value: number } | null;
   }> {
-    const queryBuilder = this.commonService
+    const dataList = await this.commonService
       .composeQueryBuilder<PostEntity>(
         this.postRepository,
         'post',
@@ -68,9 +67,8 @@ export class PostService {
         'author.name',
         'authorProfile.path',
         'authorTeam.id',
-      ]);
-
-    const dataList = await queryBuilder.getMany();
+      ])
+      .getMany();
 
     const hasNextPage = dataList.length > take;
     const data = dataList.slice(0, take);
@@ -87,26 +85,52 @@ export class PostService {
     };
   }
 
-  /**
-   * # GET
-   * # Base
-   * # find Post by FindOneOptions
-   */
-  async getPostBase(
-    findOneOptions: FindOneOptions<PostEntity>,
-  ): Promise<PostEntity> {
-    try {
-      const post = await this.postRepository.findOne({ ...findOneOptions });
+  async cursorPaginateComment(
+    postId: number,
+    take: number,
+    cursor?: { id: number; value: number },
+  ): Promise<{
+    data: PostCommentEntity[];
+    nextCursor: { id: number; value: number } | null;
+  }> {
+    const dataList = await this.commonService
+      .composeQueryBuilder<PostCommentEntity>(
+        this.postCommentRepository,
+        'comments',
+        take,
+        'DESC',
+        'id',
+        cursor,
+        { postId },
+      )
+      .leftJoinAndSelect('comments.post', 'post')
+      .leftJoinAndSelect('comments.writer', 'writer')
+      .leftJoinAndSelect('writer.profile', 'writerProfile')
+      .select([
+        'comments.id',
+        'comments.content',
+        'comments.createAt',
+        'writer.id',
+        'writer.name',
+        'writerProfile.id',
+        'writerProfile.path',
+        'post.id',
+      ])
+      .getMany();
 
-      if (!post) {
-        throw new NotFoundException('게시물을 찾을 수 없습니다.');
-      }
+    const hasNextPage = dataList.length > take;
+    const data = dataList.slice(0, take);
+    const nextCursor = hasNextPage
+      ? {
+          id: data[data.length - 1].id,
+          value: data[data.length - 1].id,
+        }
+      : null;
 
-      return post;
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('서버에 문제가 발생했습니다.');
-    }
+    return {
+      data,
+      nextCursor,
+    };
   }
 
   /**
@@ -149,16 +173,18 @@ export class PostService {
       .leftJoinAndSelect('post.author', 'author')
       .leftJoinAndSelect('author.profile', 'authorProfile')
       .leftJoinAndSelect('post.images', 'images')
+      .leftJoinAndSelect('post.likers', 'likers')
       .select([
         'post.id',
         'post.title',
+        'post.content',
+        'post.contentType',
+        'post.visibility',
+        'post.likeCount',
         'author.id',
         'author.name',
-        'authorProfile.id',
         'authorProfile.path',
-        'images.id',
-        'images.order',
-        'images.path',
+        'likers.id',
       ])
       .where('post.id = :id', { id })
       .getOne();
@@ -167,17 +193,29 @@ export class PostService {
       throw new NotFoundException('게시물을 찾을 수 없습니다.');
     }
 
-    return post;
-  }
+    const comment = await this.postCommentRepository
+      .createQueryBuilder('comments')
+      .leftJoinAndSelect('comments.post', 'post')
+      .leftJoinAndSelect('comments.writer', 'writer')
+      .leftJoinAndSelect('writer.profile', 'profile')
+      .select([
+        'post.id',
+        'comments.id',
+        'comments.content',
+        'comments.createAt',
+        'writer.id',
+        'writer.name',
+        'profile.id',
+        'profile.path',
+      ])
+      .where('post.id = :id', { id })
+      .orderBy('comments.id', 'DESC')
+      .limit(1)
+      .getOne();
 
-  /**
-   * # GET
-   * get post by post id
-   */
-  async getPostById(id: number): Promise<PostEntity> {
-    const post = await this.getPost({
-      where: { id },
-    });
+    if (comment) {
+      post.comments = [comment];
+    }
 
     return post;
   }
@@ -189,7 +227,7 @@ export class PostService {
   async findPostList(keywords: string): Promise<PostEntity[]> {
     if (keywords.trim().length < 2) return;
 
-    const queryBuilder = this.postRepository
+    const postList = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .select([
@@ -202,9 +240,8 @@ export class PostService {
       ])
       .where('post.title ILIKE :keyword OR post.content ILIKE :keyword', {
         keyword: `%${keywords}%`,
-      });
-
-    const postList = await queryBuilder.getMany();
+      })
+      .getMany();
 
     return postList;
   }
@@ -268,8 +305,19 @@ export class PostService {
    * # Patch
    * update view count
    */
+  async getPostForViews(id: number): Promise<PostEntity> {
+    const post = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .select(['post.id', 'post.viewCount', 'author.id'])
+      .where('post.id = :id', { id })
+      .getOne();
+
+    return post;
+  }
+
   async increaseViews(userId: number, postId: number): Promise<void> {
-    const post = await this.getPostById(postId);
+    const post = await this.getPostForViews(postId);
 
     if (userId && userId !== post.author.id) {
       post.viewCount++;
@@ -281,14 +329,14 @@ export class PostService {
    * # Patch
    * update like count
    */
-  async updateLikes(user: UserEntity, postId: number): Promise<number> {
-    const post = await this.getPost({
-      where: { id: postId },
-      relations: {
-        likers: true,
-      },
-      select: { likers: { id: true } },
-    });
+  async updateLikes(user: UserEntity, id: number): Promise<number> {
+    const post = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('post.likers', 'likers')
+      .select(['post.id', 'author.id', 'likers.id'])
+      .where('post.id = :id', { id })
+      .getOne();
 
     if (user.id === post.author.id) {
       throw new BadRequestException(
@@ -330,6 +378,7 @@ export class PostService {
    */
   async createPostImage(dto: CreatePostImageDto) {
     const queryRunner = this.dataSource.createQueryRunner();
+
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -359,6 +408,16 @@ export class PostService {
    * # Base POST
    * create comment
    */
+  async getPostForComment(id: number): Promise<PostEntity> {
+    const post = await this.postRepository
+      .createQueryBuilder('post')
+      .select('post.id')
+      .where('post.id = :id', { id })
+      .getOne();
+
+    return post;
+  }
+
   async createComment(
     writer: UserEntity,
     dto: { postId: number; content: string },
@@ -367,7 +426,7 @@ export class PostService {
       throw new BadRequestException('댓글을 입력해주세요.');
     }
 
-    const post = await this.getPostById(dto.postId);
+    const post = await this.getPostForComment(dto.postId);
 
     const comment = this.postCommentRepository.create({
       writer,
@@ -420,16 +479,24 @@ export class PostService {
    * get comment by post id
    */
   async getCommentsByPostId(postId: number): Promise<PostCommentEntity[]> {
-    const comments = await this.postCommentRepository.find({
-      where: { id: postId },
-      relations: {
-        post: true,
-        writer: true,
-      },
-      select: {
-        post: { id: true },
-      },
-    });
+    const comments = await this.postCommentRepository
+      .createQueryBuilder('comments')
+      .leftJoinAndSelect('comments.post', 'post')
+      .leftJoinAndSelect('comments.writer', 'writer')
+      .leftJoinAndSelect('writer.profile', 'writerProfile')
+      .select([
+        'comments.id',
+        'comments.content',
+        'comments.createAt',
+        'writer.id',
+        'writer.name',
+        'writerProfile.id',
+        'writerProfile.path',
+        'post.id',
+      ])
+      .where('post.id = :id', { id: postId })
+      .orderBy('comments.id', 'DESC')
+      .getMany();
 
     return comments;
   }
