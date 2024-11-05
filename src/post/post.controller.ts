@@ -66,9 +66,9 @@ export class PostController {
     nextCursor: { id: number; value: number };
   }> {
     const { take, orderBy, sort, id, value } = query;
-    if (!take.match(/^([1-9]|10)$/g)) {
-      Logger.log(take);
-      return null;
+    Logger.log(take);
+    if (!(take + '').match(/^([1-9]|10)$/g)) {
+      return;
     }
 
     const cursor = {
