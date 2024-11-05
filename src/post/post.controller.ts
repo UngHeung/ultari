@@ -89,17 +89,16 @@ export class PostController {
     query: {
       take: string;
       id?: string;
-      value?: string;
     },
     @Param('id') postId: string,
   ): Promise<{
     data: PostCommentEntity[];
     nextCursor: { id: number; value: number };
   }> {
-    const { take, id, value } = query;
+    const { take, id } = query;
     const cursor = {
       id: +id,
-      value: +value,
+      value: +id,
     };
 
     return await this.postService.cursorPaginateComment(
