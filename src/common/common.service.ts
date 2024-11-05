@@ -37,22 +37,36 @@ export class CommonService {
       .addOrderBy(`${target}.id`, orderBy)
       .take(take + 1);
 
+    const join = where?.postId ? ` AND post.id = :postId` : '';
+
     if (cursor) {
-      if (cursor.value) {
-        const compareValueQuery = `(${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} ${cursor.value}) OR (${target}.${sort} = ${cursor.value}`;
-        const compareIdQuery = `${target}.id ${sort.includes('id') && orderBy === 'DESC' ? '<' : '>'} ${cursor.id})`;
-        const query = `${compareValueQuery} AND ${compareIdQuery}`;
+      if (cursor.value !== -1) {
+        queryBuilder
+          .where(`${target}.${sort} ${orderBy === 'ASC' ? '>=' : '<='} :value`)
+          .andWhere(
+            `${target}.id ${sort.includes('id') && orderBy === 'ASC' ? '>' : '<'} :id`,
+          );
 
-        queryBuilder.where(query, { value: cursor.value, id: cursor.id });
+        if (join) {
+          queryBuilder.andWhere('post.id = :postId');
+        }
+
+        queryBuilder.setParameters({
+          id: cursor.id,
+          value: cursor.value,
+          postId: where?.postId,
+        });
       } else {
-        const query = `${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} ${cursor.id}`;
+        queryBuilder.where(
+          `${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} :id`,
+        );
 
-        queryBuilder.where(query, { id: cursor.id });
+        if (join) {
+          queryBuilder.andWhere('post.id = :postId');
+        }
+
+        queryBuilder.setParameters({ id: cursor.id, postId: where.postId });
       }
-    }
-
-    if (where) {
-      queryBuilder.andWhere('post.id = :id', { id: where.postId });
     }
 
     return queryBuilder;
