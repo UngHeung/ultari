@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -65,6 +66,11 @@ export class PostController {
     nextCursor: { id: number; value: number };
   }> {
     const { take, orderBy, sort, id, value } = query;
+    if (!take.match(/^([1-9]|10)$/g)) {
+      Logger.log(take);
+      return null;
+    }
+
     const cursor = {
       id: +id,
       value: +value,

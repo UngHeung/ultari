@@ -31,10 +31,6 @@ export class CommonService {
       postId: number;
     },
   ): SelectQueryBuilder<T> {
-    if (typeof take !== 'number') {
-      take = 10;
-    }
-
     const queryBuilder = repository
       .createQueryBuilder(target)
       .orderBy(`${target}.${sort}`, orderBy)
