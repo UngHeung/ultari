@@ -37,11 +37,11 @@ export class TeamService {
 
     const team = this.teamRepository.create({
       name: dto.name,
-      community: dto.community,
       description: dto.description,
+      community: dto.community,
       leader: user,
-
       member: [user],
+      applicants: [],
       isActive: false,
       teamCode: await this.generateTeamCode(dto.name),
     });
@@ -79,7 +79,7 @@ export class TeamService {
 
   /**
    * # GET
-   * get team and team details
+   * get team details
    */
   async getTeamForDetail(teamId: number): Promise<TeamEntity> {
     const team = await this.teamRepository
