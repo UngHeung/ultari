@@ -1,7 +1,7 @@
 export enum PublicEnum {
   PUBLIC = 'SCOPE_PUBLIC',
   PASTURE = 'SCOPE_TEAM',
-  PRIVATE = 'SCOPE_PERSONAL',
+  PRIVATE = 'SCOPE_PRIVATE',
 }
 
 export enum ContentTypeEnum {
