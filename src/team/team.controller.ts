@@ -14,7 +14,6 @@ import {
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { UserService } from 'src/user/user.service';
 import { CreateTeamDto } from './dto/create-team.dto';
-import { FindTeamDto } from './dto/find-team.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
 import { TeamEntity } from './entity/team.entity';
 import { TeamService } from './team.service';
@@ -26,31 +25,38 @@ export class TeamController {
     private readonly userService: UserService,
   ) {}
 
-  @Post('/')
-  @UseGuards(AccessTokenGuard)
-  createTeam(@Req() req, @Body() dto: CreateTeamDto): Promise<TeamEntity> {
-    return this.teamService.createTeam(req.user, dto);
-  }
-
-  @Get('/find')
-  @UseGuards(AccessTokenGuard)
-  findTeam(@Query() query: FindTeamDto): Promise<TeamEntity[]> {
-    return this.teamService.findTeamList(query);
-  }
-
+  /**
+   * # GET
+   * find team detail by id
+   */
   @Get('/:id')
   getTeamForDetail(@Param('id') id: number): Promise<TeamEntity> {
     return this.teamService.getTeamForDetail(id);
   }
 
-  @Get('/')
-  getTeamListAll(): Promise<TeamEntity[]> {
-    return this.teamService.getTeamAll();
+  /**
+   * # GET
+   * find team list by keyword
+   */
+  @Get('/find')
+  @UseGuards(AccessTokenGuard)
+  findTeam(@Query() query: { keyword: string }): Promise<TeamEntity[]> {
+    return this.teamService.findTeamList(query.keyword);
   }
 
-  @Get('/applicant/:id')
-  getApplicantList(@Query() query: { id: number }): Promise<TeamEntity> {
-    return this.teamService.getTeamAndJoinTeamApplicantList(query.id);
+  /**
+   * # GET
+   * get applicant list by team id
+   */
+  @Get('/:id/applicant')
+  getApplicantList(@Param('id') id: number): Promise<TeamEntity> {
+    return this.teamService.getTeamApplicants(id);
+  }
+
+  @Post('/')
+  @UseGuards(AccessTokenGuard)
+  createTeam(@Req() req, @Body() dto: CreateTeamDto): Promise<TeamEntity> {
+    return this.teamService.createTeam(req.user, dto);
   }
 
   @Put('/member/sign')

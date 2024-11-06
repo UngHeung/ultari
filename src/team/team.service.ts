@@ -11,9 +11,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { nanoid } from 'nanoid';
 import { UserEntity } from 'src/user/entity/user.entity';
 import { UserService } from 'src/user/user.service';
-import { FindOneOptions, Like, Repository } from 'typeorm';
+import { FindOneOptions, Repository } from 'typeorm';
 import { CreateTeamDto } from './dto/create-team.dto';
-import { FindTeamDto } from './dto/find-team.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
 import { TeamEntity } from './entity/team.entity';
 
@@ -128,30 +127,43 @@ export class TeamService {
    * # GET
    * find team by keywords (name, community)
    */
-  async findTeamList(dto: FindTeamDto) {
-    const findOption: FindOneOptions<TeamEntity> = {
-      where:
-        dto.type === 'community'
-          ? { community: Like(`%${dto.keyword}%`) }
-          : dto.type === 'id'
-            ? { id: dto.id }
-            : { name: Like(`%${dto.keyword}%`) },
-    };
+  async findTeamList(keyword: string): Promise<TeamEntity[]> {
+    const teamList = await this.teamRepository
+      .createQueryBuilder('team')
+      .leftJoinAndSelect('team.leader', 'leader')
+      .leftJoinAndSelect('leader.profile', 'leaderProfile')
+      .select([
+        'team.id',
+        'team.name',
+        'team.community',
+        'team.description',
+        'team.isActive',
+        'leader.id',
+        'leader.name',
+        'leaderProfile.id',
+        'leaderProfile.path',
+      ])
+      .where('team.name ILIKE :keyword OR team.community ILIKE :keyword', {
+        keyword: `%${keyword}%`,
+      })
+      .getMany();
 
-    const findTeamList = this.getTeamList(findOption);
-
-    return findTeamList;
+    return teamList;
   }
 
   /**
    * # GET
-   * get team and join team applicant list
+   * get team applicant list
    */
-  async getTeamAndJoinTeamApplicantList(id: number): Promise<TeamEntity> {
-    return await this.getTeam({
-      where: { id },
-      relations: { leader: true, member: true, applicants: true },
-    });
+  async getTeamApplicants(teamId: number): Promise<TeamEntity> {
+    const applicants = await this.teamRepository
+      .createQueryBuilder('team')
+      .leftJoinAndSelect('team.applicants', 'applicants')
+      .select(['team.id', 'applicants'])
+      .where('team.id = :teamId', { teamId })
+      .getOne();
+
+    return applicants;
   }
 
   /**
