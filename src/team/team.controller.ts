@@ -6,7 +6,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   Req,
   UseGuards,
@@ -59,7 +58,7 @@ export class TeamController {
     return this.teamService.createTeam(req.user, dto);
   }
 
-  @Put('/member/sign')
+  @Patch('/member/sign')
   @UseGuards(AccessTokenGuard)
   async addMember(
     @Req() req,
