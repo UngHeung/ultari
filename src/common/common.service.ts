@@ -1,10 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { promises } from 'fs';
 import { join } from 'path';
 import { UserEntity } from 'src/user/entity/user.entity';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 import { BaseModel } from './entity/base.entity';
 
 @Injectable()
@@ -42,9 +42,13 @@ export class CommonService {
     if (cursor) {
       if (cursor.value !== -1) {
         queryBuilder
-          .where(`${target}.${sort} ${orderBy === 'ASC' ? '>=' : '<='} :value`)
-          .andWhere(
-            `${target}.id ${sort.includes('id') && orderBy === 'ASC' ? '>' : '<'} :id`,
+          .where(`${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} :value`)
+          .orWhere(
+            new Brackets(qb => {
+              qb.where(`${target}.${sort} = :value`).andWhere(
+                `${target}.id ${orderBy === 'ASC' ? '>' : '<'} :id`,
+              );
+            }),
           );
 
         if (join) {
