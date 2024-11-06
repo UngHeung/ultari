@@ -39,8 +39,8 @@ export class TeamController {
   }
 
   @Get('/:id')
-  getTeamAndData(@Param('id') id: number): Promise<TeamEntity> {
-    return this.teamService.getTeamAndTeamData(id);
+  getTeamForDetail(@Param('id') id: number): Promise<TeamEntity> {
+    return this.teamService.getTeamForDetail(id);
   }
 
   @Get('/')

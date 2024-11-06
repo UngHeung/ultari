@@ -56,15 +56,70 @@ export class TeamService {
    * find team by team code
    */
   async findTeamByTeamCode(teamCode: string): Promise<TeamEntity> {
-    return await this.getTeam({ where: { teamCode } });
+    const team = await this.teamRepository
+      .createQueryBuilder('team')
+      .leftJoinAndSelect('team.leader', 'leader')
+      .leftJoinAndSelect('leader.profile', 'leaderProfile')
+      .select([
+        'team.id',
+        'team.name',
+        'team.community',
+        'team.description',
+        'team.isActive',
+        'leader.id',
+        'leader.name',
+        'leaderProfile.id',
+        'leaderProfile.path',
+      ])
+      .where('team.teamCode = :teamCode', { teamCode })
+      .getOne();
+
+    return team;
   }
 
   /**
    * # GET
-   * get team and team data
+   * get team and team details
    */
-  async getTeamAndTeamData(teamId: number): Promise<TeamEntity> {
-    const team = await this.getTeam({ where: { id: teamId } });
+  async getTeamForDetail(teamId: number): Promise<TeamEntity> {
+    const team = await this.teamRepository
+      .createQueryBuilder('team')
+      .leftJoinAndSelect('team.leader', 'leader')
+      .leftJoinAndSelect('leader.profile', 'leaderProfile')
+      .leftJoinAndSelect('team.subLeader', 'subLeader')
+      .leftJoinAndSelect('subLeader.profile', 'subLeaderProfile')
+      .leftJoinAndSelect('team.member', 'member')
+      .leftJoinAndSelect('member.profile', 'memberProfile')
+      .leftJoinAndSelect('team.applicants', 'applicants')
+      .leftJoinAndSelect('applicants.profile', 'applicantsProfile')
+      .select([
+        'team.id',
+        'team.name',
+        'team.community',
+        'team.description',
+        'team.isActive',
+        'team.teamCode',
+        'leader.id',
+        'leader.name',
+        'leaderProfile.id',
+        'leaderProfile.path',
+        'subLeader.id',
+        'subLeader.name',
+        'subLeaderProfile.id',
+        'subLeaderProfile.path',
+        'member.id',
+        'member.name',
+        'member.community',
+        'memberProfile.id',
+        'memberProfile.path',
+        'applicants.id',
+        'applicants.name',
+        'applicants.community',
+        'applicantsProfile.id',
+        'applicantsProfile.path',
+      ])
+      .where('team.id = :teamId', { teamId })
+      .getOne();
 
     return team;
   }
