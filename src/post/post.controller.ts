@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -50,7 +51,7 @@ export class PostController {
    * post paginate
    * get post list
    */
-  @Get('/')
+  @Get('/pg')
   async getPaginatePost(
     @Query()
     query: {
@@ -65,6 +66,11 @@ export class PostController {
     nextCursor: { id: number; value: number };
   }> {
     const { take, orderBy, sort, id, value } = query;
+    // Logger.log(take);
+    // if (!(take + '').match(/^([1-9]|10)$/g)) {
+    //   return;
+    // }
+
     const cursor = {
       id: +id,
       value: +value,
@@ -83,7 +89,7 @@ export class PostController {
    * comment paginate
    * get comment list by post id
    */
-  @Get('/:id/comments')
+  @Get('/pg/:id/comments')
   async getPaginateComment(
     @Query()
     query: {
