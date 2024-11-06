@@ -30,6 +30,31 @@ export class UserService {
   ) {}
 
   /**
+   * # GET
+   * get userTeam
+   */
+  async getUserTeam(id: number): Promise<UserEntity> {
+    const user = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.team', 'team')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('team.member', 'member')
+      .select([
+        'user.id',
+        'user.name',
+        'user.community',
+        'profile.id',
+        'profile.path',
+        'team.id',
+        'member.id',
+      ])
+      .where('user.id = :id', { id })
+      .getOne();
+
+    return user;
+  }
+
+  /**
    * # POST
    * create user
    */
@@ -53,7 +78,7 @@ export class UserService {
     userId: number,
     teamId: number,
   ): Promise<UserEntity> {
-    const team = await this.teamService.getTeamById(teamId);
+    const team = await this.teamService.getTeamMember(teamId);
     const user = await this.getUserDataAndApplyTeam(userId);
 
     if (this.teamService.existsMember(team.member, userId)) {

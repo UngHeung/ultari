@@ -153,6 +153,21 @@ export class TeamService {
 
   /**
    * # GET
+   * get team member list
+   */
+  async getTeamMember(teamId: number): Promise<TeamEntity> {
+    const member = await this.teamRepository
+      .createQueryBuilder('team')
+      .leftJoinAndSelect('team.member', 'member')
+      .select(['team.id', 'member'])
+      .where('team.id = :teamId', { teamId })
+      .getOne();
+
+    return member;
+  }
+
+  /**
+   * # GET
    * get team applicant list
    */
   async getTeamApplicants(teamId: number): Promise<TeamEntity> {
@@ -167,31 +182,28 @@ export class TeamService {
   }
 
   /**
-   * # GET
-   * get team by id
-   */
-  async getTeamById(id: number) {
-    const team = await this.getTeam({ where: { id } });
-
-    if (!team) {
-      throw new NotFoundException('팀을 찾을 수 없습니다.');
-    }
-
-    return team;
-  }
-
-  /**
-   * # Put
-   * sign team
+   * # PATCH
+   * user sign in team
    */
   async signMember(
     leader: UserEntity,
     dto: { teamId: number; userId: number },
   ): Promise<TeamEntity> {
-    const team = await this.teamRepository.findOne({
-      where: { id: dto.teamId },
-      relations: { leader: true, member: true },
-    });
+    const team = await this.teamRepository
+      .createQueryBuilder('team')
+      .leftJoinAndSelect('team.leader', 'leader')
+      .leftJoinAndSelect('team.member', 'member')
+      .leftJoinAndSelect('member.profile', 'memberProfile')
+      .select([
+        'team.id',
+        'leader.id',
+        'member.id',
+        'member.name',
+        'memberProfile.id',
+        'memberProfile.path',
+      ])
+      .where('team.id = :teamId', { teamId: dto.teamId })
+      .getOne();
 
     if (team.leader.id !== leader.id) {
       throw new UnauthorizedException('권한이 없습니다. 리더가 아닙니다.');
@@ -201,7 +213,7 @@ export class TeamService {
       throw new ConflictException('이미 가입된 사용자입니다.');
     }
 
-    const user = await this.userService.getUserData(dto.userId);
+    const user = await this.userService.getUserTeam(dto.userId);
 
     if (user.team) {
       throw new ConflictException('이미 가입된 목장이 있는 사용자입니다.');

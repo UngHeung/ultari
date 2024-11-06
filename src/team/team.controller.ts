@@ -58,6 +58,10 @@ export class TeamController {
     return this.teamService.createTeam(req.user, dto);
   }
 
+  /**
+   * # PATCH
+   * user sign in member
+   */
   @Patch('/member/sign')
   @UseGuards(AccessTokenGuard)
   async addMember(
