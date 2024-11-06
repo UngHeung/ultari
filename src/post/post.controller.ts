@@ -51,7 +51,7 @@ export class PostController {
    * post paginate
    * get post list
    */
-  @Get('/')
+  @Get('/pg')
   async getPaginatePost(
     @Query()
     query: {
