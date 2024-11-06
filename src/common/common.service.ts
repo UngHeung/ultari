@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { promises } from 'fs';
@@ -37,10 +37,14 @@ export class CommonService {
       .addOrderBy(`${target}.id`, orderBy)
       .take(take + 1);
 
-    const join = where?.postId ? ` AND post.id = :postId` : '';
+    if (target === 'comments') {
+      queryBuilder
+        .leftJoinAndSelect('comments.post', 'targetPost')
+        .select(['targetPost.id']);
+    }
 
-    if (cursor) {
-      if (cursor.value !== -1) {
+    if (target === 'post') {
+      if (cursor && cursor.id >= 0) {
         queryBuilder
           .where(`${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} :value`)
           .orWhere(
@@ -51,23 +55,17 @@ export class CommonService {
             }),
           );
 
-        if (join) {
-          queryBuilder.andWhere('post.id = :postId');
-        }
-
         queryBuilder.setParameters({
           id: cursor.id,
           value: cursor.value,
           postId: where?.postId,
         });
-      } else {
-        queryBuilder.where(
-          `${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} :id`,
-        );
-
-        if (join) {
-          queryBuilder.andWhere('post.id = :postId');
-        }
+      }
+    } else if (target === 'comments') {
+      if (cursor && cursor.id >= 0) {
+        queryBuilder
+          .where(`${target}.${sort} ${orderBy === 'ASC' ? '>' : '<'} :id`)
+          .andWhere(target === 'comments' ? 'targetPost.id = :postId' : null);
 
         queryBuilder.setParameters({ id: cursor.id, postId: where.postId });
       }
